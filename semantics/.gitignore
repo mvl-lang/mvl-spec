@@ -1,0 +1,24 @@
+# Generated Ott outputs — rebuilt on demand from mvl.ott
+generated/mvl.tex
+generated/mvl.v
+generated/mvl.thy
+
+# LaTeX intermediates
+generated/*.aux
+generated/*.log
+generated/*.out
+generated/*.pdf
+generated/*.toc
+generated/*.fdb_latexmk
+generated/*.fls
+generated/*.synctex.gz
+
+# Coq intermediates
+generated/*.vo
+generated/*.vok
+generated/*.vos
+generated/*.glob
+
+# Isabelle intermediates
+generated/.thumb
+generated/Isabelle.session

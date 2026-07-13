@@ -1,0 +1,99 @@
+%%
+%% MVL — formal semantics in Ott
+%%
+%% Status: SCAFFOLD ONLY (2026-07-13). This file exists to validate the
+%% build pipeline. Real semantic content lands in follow-up PRs against
+%% https://github.com/mvl-lang/mvl-spec/issues/3.
+%%
+%% Ott reference: https://www.cl.cam.ac.uk/~pes20/ott/
+%%
+%% Build:  make tex  (LaTeX)
+%%         make coq  (Coq definitions)
+%%         make thy  (Isabelle/HOL)
+%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Metavariables
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+metavar variable, x , y , z ::=
+  {{ com program variable }}
+  {{ lex alphanum }}
+  {{ coq nat }}
+
+metavar integer, n , m ::=
+  {{ com integer literal }}
+  {{ lex numeral }}
+  {{ coq nat }}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Syntax
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+grammar
+
+  %% Types.  Minimal scaffold — real MVL types (ADTs, generics, refinements,
+  %% effects, capabilities, labels) land in follow-up PRs.
+  T :: 'T_' ::=                    {{ com types }}
+    | Int                          :: :: Int  {{ com integer type }}
+    | Bool                         :: :: Bool {{ com boolean type }}
+    | Unit                         :: :: Unit {{ com unit type }}
+
+  %% Expressions.  Minimal scaffold — real MVL expressions (match, if-let,
+  %% method calls, actor spawn, propagate `?`, refinements, effects) land
+  %% in follow-up PRs.
+  e :: 'e_' ::=                    {{ com expressions }}
+    | x                            :: :: Var  {{ com variable }}
+    | n                            :: :: Int  {{ com integer literal }}
+    | e1 + e2                      :: :: Plus {{ com addition }}
+    | ( e )                        :: S :: Paren  {{ ich [[e]] }}
+
+  %% Typing environments Γ : x -> T
+  G {{ tex \Gamma }} :: 'G_' ::=   {{ com typing environment }}
+    | empty                        :: :: Empty {{ com [[empty]] }}
+    | G , x : T                    :: :: Cons  {{ com extend Γ with x:T }}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Terminals
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+terminals :: 'terminals_' ::=
+  | |-                             :: :: turnstile {{ tex \vdash }}
+  | :                              :: :: colon
+  | ,                              :: :: comma
+  | in                             :: :: in    {{ tex \in }}
+  | ->                             :: :: arrow {{ tex \rightarrow }}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Judgments
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+defns
+  Jtype :: '' ::=
+
+  %% Typing judgment Γ ⊢ e : T
+  %%
+  %% Two rules for now — enough to prove the Ott pipeline works and
+  %% that the generated Coq typechecks.  Deliberately omitted:
+  %%   - T-Var — needs environment-lookup semantics; lands in PR-2
+  %%             along with the full core language.
+  %% Follow-up PRs also add:
+  %%   - T-Bool  (literal true/false)
+  %%   - T-Let   (let binding)
+  %%   - T-App   (function application)
+  %%   - T-If    (if expression)
+  %%   - T-Match (pattern match, with exhaustiveness side condition)
+  %%   - Effect-typing judgment  Γ ⊢ e : T ! ε
+  %%   - IFC-typing judgment     Γ ⊢ e : T @ ℓ
+  %%   - Refinement judgment     Γ ⊢ e : T where P
+  %%   - Contract judgment       Γ ⊢ e : T requires P ensures Q
+  defn G |- e : T :: :: typing :: Ty_
+    {{ com typing judgment }} by
+
+      ---------------- :: Int
+      G |- n : Int
+
+      G |- e1 : Int
+      G |- e2 : Int
+      ------------------- :: Plus
+      G |- e1 + e2 : Int

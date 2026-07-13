@@ -1,0 +1,63 @@
+name: Validate semantics (Ott)
+
+# Runs on every PR that touches semantics/.  Installs Ott via opam and
+# validates that mvl.ott parses cleanly, then builds LaTeX and Coq
+# outputs.  Optionally: pipes the Coq output through coqc for a deeper
+# type-check.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "semantics/**"
+      - ".github/workflows/semantics-build.yml"
+  pull_request:
+    paths:
+      - "semantics/**"
+      - ".github/workflows/semantics-build.yml"
+
+jobs:
+  ott:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache opam
+        uses: actions/cache@v4
+        with:
+          path: ~/.opam
+          key: ${{ runner.os }}-opam-ott-coq
+
+      - name: Install opam + Ott + Coq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y opam
+          opam init --disable-sandboxing --yes --auto-setup
+          eval $(opam env)
+          opam install --yes ott coq
+          echo "$HOME/.opam/default/bin" >> "$GITHUB_PATH"
+
+      - name: Validate mvl.ott (syntax check)
+        working-directory: semantics
+        run: make validate
+
+      - name: Build LaTeX
+        working-directory: semantics
+        run: make tex
+
+      - name: Build Coq
+        working-directory: semantics
+        run: make coq
+
+      - name: Type-check generated Coq
+        working-directory: semantics
+        run: make check-coq
+
+      - name: Upload generated outputs as CI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: semantics-outputs
+          path: |
+            semantics/generated/mvl.tex
+            semantics/generated/mvl.v
+          retention-days: 14
