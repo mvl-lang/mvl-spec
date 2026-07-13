@@ -5,6 +5,11 @@ Zed extension for [MVL (Maximum Verifiable Language)](../../README.md).
 Provides syntax highlighting, bracket matching, and smart indentation via
 Zed's native tree-sitter integration.
 
+**Version:** 0.1.0
+**Tracks:** mvl-spec ≥ 0.1.0, < 0.5.0
+**Depends on:** tree-sitter-mvl ≥ 0.1.0
+**Changelog:** [`CHANGELOG.md`](CHANGELOG.md)
+
 ## Installation
 
 ### Development (local)

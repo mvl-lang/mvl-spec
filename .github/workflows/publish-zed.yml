@@ -1,0 +1,49 @@
+name: Publish zed-mvl
+
+# Triggered by tags matching `zed-v*` (e.g. zed-v0.1.0).
+# Zed Extensions is a git-based registry — publishing means opening a PR to
+# zed-industries/extensions. This workflow validates the extension and creates
+# a GitHub Release; the PR to zed-industries/extensions is a manual follow-up.
+
+on:
+  push:
+    tags:
+      - "zed-v*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: editors/zed
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/zed-v}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify manifest version matches tag
+        run: |
+          MANIFEST_VERSION=$(grep -E '^version = ' extension.toml | sed -E 's/^version = "(.+)"$/\1/')
+          if [ "$MANIFEST_VERSION" != "${{ steps.version.outputs.version }}" ]; then
+            echo "::error::extension.toml version ($MANIFEST_VERSION) does not match tag (${{ steps.version.outputs.version }})"
+            exit 1
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: zed-mvl ${{ steps.version.outputs.version }}
+          body: |
+            Zed extension release. To install into Zed's registry, open a PR
+            to [zed-industries/extensions](https://github.com/zed-industries/extensions)
+            bumping the pinned commit in `extensions/mvl/extension.toml` to
+            this tag.
+
+            See CHANGELOG for details.
+          body_path: editors/zed/CHANGELOG.md
+          draft: false
+          prerelease: false

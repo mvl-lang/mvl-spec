@@ -1,0 +1,63 @@
+name: Publish tree-sitter-mvl
+
+# Triggered by tags matching `tree-sitter-v*` (e.g. tree-sitter-v0.1.0).
+# Publishes tools/tree-sitter/ to npm as `tree-sitter-mvl`.
+#
+# SKELETON — credentials (NPM_TOKEN) not yet configured. The publish step
+# is gated behind `if: false` until real publishing is enabled.
+
+on:
+  push:
+    tags:
+      - "tree-sitter-v*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # for creating a GitHub Release
+    defaults:
+      run:
+        working-directory: tools/tree-sitter
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/tree-sitter-v}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify manifest version matches tag
+        run: |
+          MANIFEST_VERSION=$(node -p "require('./package.json').version")
+          if [ "$MANIFEST_VERSION" != "${{ steps.version.outputs.version }}" ]; then
+            echo "::error::package.json version ($MANIFEST_VERSION) does not match tag (${{ steps.version.outputs.version }})"
+            exit 1
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install
+        run: npm ci || npm install
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test
+
+      - name: Publish to npm
+        if: false   # ← flip to `true` once NPM_TOKEN is configured
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: tree-sitter-mvl ${{ steps.version.outputs.version }}
+          body_path: tools/tree-sitter/CHANGELOG.md
+          draft: false
+          prerelease: false

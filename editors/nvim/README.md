@@ -2,6 +2,12 @@
 
 Neovim plugin for [MVL (Maximum Verifiable Language)](../../README.md).
 
+**Version:** 0.1.0
+**Tracks:** mvl-spec ≥ 0.1.0, < 0.5.0
+**Depends on:** tree-sitter-mvl ≥ 0.1.0, nvim-treesitter
+**Requires:** Neovim ≥ 0.9
+**Changelog:** [`CHANGELOG.md`](CHANGELOG.md)
+
 Provides:
 - Syntax highlighting via tree-sitter
 - Code folding (`zc`, `zo`, `zR`)

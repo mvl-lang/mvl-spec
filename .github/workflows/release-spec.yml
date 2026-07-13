@@ -1,0 +1,38 @@
+name: Release mvl-spec
+
+# Triggered by tags matching `spec-v*` (e.g. spec-v0.1.0).
+# Creates a GitHub Release marking a versioned spec snapshot.
+# Zenodo DOI integration is a follow-up.
+
+on:
+  push:
+    tags:
+      - "spec-v*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/spec-v}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify VERSION file matches tag
+        run: |
+          VERSION_FILE=$(cat VERSION | tr -d '[:space:]')
+          if [ "$VERSION_FILE" != "${{ steps.version.outputs.version }}" ]; then
+            echo "::error::VERSION ($VERSION_FILE) does not match tag (${{ steps.version.outputs.version }})"
+            exit 1
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: mvl-spec ${{ steps.version.outputs.version }}
+          body_path: CHANGELOG.md
+          draft: false
+          prerelease: false

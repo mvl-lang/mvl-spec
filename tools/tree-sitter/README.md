@@ -5,6 +5,11 @@ compiler-verified language designed for safety-critical and security-sensitive c
 
 Provides syntax highlighting for **Zed** and **Neovim** (and any editor backed by tree-sitter).
 
+**Version:** 0.1.0
+**Tracks:** mvl-spec ≥ 0.1.0, < 0.5.0
+**Published as:** [`tree-sitter-mvl`](https://www.npmjs.com/package/tree-sitter-mvl) on npm
+**Changelog:** [`CHANGELOG.md`](CHANGELOG.md)
+
 ## Features
 
 - Full MVL grammar (`grammar.js`) derived from the formal EBNF (`docs/grammar.ebnf`)

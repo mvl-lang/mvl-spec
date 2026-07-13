@@ -1,0 +1,38 @@
+name: Publish nvim-mvl
+
+# Triggered by tags matching `nvim-v*` (e.g. nvim-v0.1.0).
+# Neovim has no central registry — users install by git URL. This workflow
+# validates the plugin structure and creates a GitHub Release for the tag.
+
+on:
+  push:
+    tags:
+      - "nvim-v*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/nvim-v}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify VERSION file matches tag
+        run: |
+          VERSION_FILE=$(cat editors/nvim/VERSION | tr -d '[:space:]')
+          if [ "$VERSION_FILE" != "${{ steps.version.outputs.version }}" ]; then
+            echo "::error::editors/nvim/VERSION ($VERSION_FILE) does not match tag (${{ steps.version.outputs.version }})"
+            exit 1
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: nvim-mvl ${{ steps.version.outputs.version }}
+          body_path: editors/nvim/CHANGELOG.md
+          draft: false
+          prerelease: false

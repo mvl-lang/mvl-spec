@@ -2,6 +2,9 @@
 
 **Formal specification of the MVL (Maximum Verifiable Language) programming language.**
 
+**Version:** [0.1.0](VERSION) — see [CHANGELOG.md](CHANGELOG.md)
+**License:** Apache-2.0
+
 This repository is the source of truth for what MVL *is*, independent of any particular implementation of it. The compiler in [`mvl-lang/mvl`](https://github.com/mvl-lang/mvl) implements this specification; other tooling consumes it.
 
 ---
@@ -64,33 +67,43 @@ This discipline is the primary reason these artifacts live together in one repo 
 
 ---
 
-## Publishing
+## Versioning and publishing
 
-Each shippable artifact has its own version tag namespace:
+Everything shippable is versioned independently. The spec itself has one version (`VERSION` at the repo root); each tool has its own version (in its manifest) and its own `CHANGELOG.md`.
 
-| Artifact | Tag prefix | Registry | Directory |
-|----------|-----------|----------|-----------|
-| Full spec release | `spec-v*` | Zenodo (DOI) | *(repo root)* |
-| tree-sitter grammar | `tree-sitter-v*` | npm as `tree-sitter-mvl` | `tools/tree-sitter/` |
-| Pygments lexer | `pygments-v*` | PyPI as `pygments-mvl` | `tools/pygments/` |
-| VS Code extension | `vscode-v*` | VS Code Marketplace | `editors/vscode/` |
-| Zed extension | `zed-v*` | Zed Extensions | `editors/zed/` |
-| Neovim plugin | `nvim-v*` | git only (users install by URL) | `editors/nvim/` |
+### Tag manifest
 
-CI workflows watch the tag prefix and publish from the matching subdirectory.
+| Artifact | Current | Tag prefix | Registry | Directory |
+|----------|---------|-----------|----------|-----------|
+| Full spec release | `0.1.0` | `spec-v*` | GitHub Releases (Zenodo DOI planned) | *(repo root)* |
+| tree-sitter grammar | `0.1.0` | `tree-sitter-v*` | npm as `tree-sitter-mvl` | `tools/tree-sitter/` |
+| Pygments lexer | *(pending #1)* | `pygments-v*` | PyPI as `pygments-mvl` | `tools/pygments/` |
+| VS Code extension | `0.1.0` | `vscode-v*` | VS Code Marketplace + Open VSX | `editors/vscode/` |
+| Zed extension | `0.1.0` | `zed-v*` | Zed Extensions | `editors/zed/` |
+| Neovim plugin | `0.1.0` | `nvim-v*` | git only (users install by URL) | `editors/nvim/` |
 
----
+CI workflows in `.github/workflows/publish-*.yml` watch each tag prefix and publish from the matching subdirectory. Actual publish steps are currently gated behind `if: false` — the workflows validate, build, and release to GitHub, but do not push to external registries until publishing credentials are configured.
 
-## Versioning policy
+### Semver interpretation (pre-1.0)
 
-The spec itself is versioned independently of tooling. Each downstream tool declares which spec range it supports:
+Because everything is pre-1.0, MINOR bumps mark the breakpoint:
+
+- `0.x.0` → `0.(x+1).0` — breaking change (grammar restructure, keyword rename, incompatible query change)
+- `0.x.y` → `0.x.(y+1)` — additive or non-breaking change
+
+At 1.0 we shift to real semver. Documented in [CHANGELOG.md](CHANGELOG.md).
+
+### Compatibility declarations
+
+Each tool declares which spec range it supports, in its README and CHANGELOG:
 
 ```
-tree-sitter-mvl v0.3.2   tracks mvl-spec >= 0.55, < 0.70
-pygments-mvl    v0.1.5   tracks mvl-spec >= 0.55
+tree-sitter-mvl 0.1.0   tracks mvl-spec >= 0.1, < 0.5
+pygments-mvl    0.1.0   tracks mvl-spec >= 0.1
+zed-mvl         0.1.0   tracks mvl-spec >= 0.1, depends on tree-sitter-mvl >= 0.1
 ```
 
-This lets tooling ship bug fixes without forcing a full spec revision, and lets the spec evolve without immediately breaking every downstream user.
+This lets tooling ship bug fixes without forcing a full spec revision, and lets the spec evolve without immediately breaking every downstream user. The range narrows when the spec introduces a real breaking change; until then the upper bound floats to signal "we haven't tested against a version this new yet."
 
 ---
 

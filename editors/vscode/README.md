@@ -5,6 +5,11 @@ VS Code extension for [MVL (Maximum Verifiable Language)](../../README.md).
 Provides syntax highlighting, bracket matching, auto-indentation, and
 comment toggling via a TextMate grammar (works in all VS Code versions).
 
+**Version:** 0.1.0
+**Tracks:** mvl-spec ≥ 0.1.0, < 0.5.0
+**Requires:** VS Code ≥ 1.75.0
+**Changelog:** [`CHANGELOG.md`](CHANGELOG.md)
+
 ## Installation
 
 ### From source (local)

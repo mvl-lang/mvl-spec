@@ -1,0 +1,66 @@
+name: Publish vscode-mvl
+
+# Triggered by tags matching `vscode-v*` (e.g. vscode-v0.1.0).
+# Publishes editors/vscode/ to VS Code Marketplace and Open VSX.
+#
+# SKELETON — VSCE_PAT (marketplace) and OVSX_PAT (open-vsx) not yet configured.
+# Publish steps are gated behind `if: false` until credentials are wired.
+
+on:
+  push:
+    tags:
+      - "vscode-v*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: editors/vscode
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/vscode-v}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install vsce
+        run: npm install -g @vscode/vsce ovsx
+
+      - name: Verify manifest version matches tag
+        run: |
+          MANIFEST_VERSION=$(node -p "require('./package.json').version")
+          if [ "$MANIFEST_VERSION" != "${{ steps.version.outputs.version }}" ]; then
+            echo "::error::package.json version ($MANIFEST_VERSION) does not match tag (${{ steps.version.outputs.version }})"
+            exit 1
+          fi
+
+      - name: Package (.vsix)
+        run: vsce package --no-dependencies
+
+      - name: Publish to VS Code Marketplace
+        if: false   # ← flip to `true` once VSCE_PAT is configured
+        run: vsce publish --no-dependencies -p "$VSCE_PAT"
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+
+      - name: Publish to Open VSX
+        if: false   # ← flip to `true` once OVSX_PAT is configured
+        run: ovsx publish "*.vsix" -p "$OVSX_PAT"
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: vscode-mvl ${{ steps.version.outputs.version }}
+          body_path: editors/vscode/CHANGELOG.md
+          files: editors/vscode/*.vsix
+          draft: false
+          prerelease: false
