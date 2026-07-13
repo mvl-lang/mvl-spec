@@ -17,8 +17,10 @@ The current file is a **scaffold**: metavariables, minimal syntax, and two examp
 ```
 semantics/
 ├── mvl.ott              # Ott source — the source of truth
-├── Makefile             # build targets: validate / tex / coq / thy
+├── Makefile             # build targets: validate / tex / coq / thy / check-*
 ├── README.md            # this file
+├── tests/
+│   └── examples.v       # regression suite of example typing proofs
 └── generated/           # build outputs (gitignored, not committed)
     ├── mvl.tex          # LaTeX (from `make tex`)
     ├── mvl.v            # Coq (from `make coq`)
@@ -93,18 +95,21 @@ The above (layers 1–3) run automatically on every PR touching `semantics/`. Th
 - ✅ **PR-2 (core language)** — Base types (`Int`, `Bool`, `String`, `Unit`), literals, arithmetic (`+ - * / %`), comparison (`== != < > <= >=`), logical (`&& || !`), `if`/`else`, `let` binding, environment-lookup semantics. 22 typing rules. Merged as [#8](https://github.com/mvl-lang/mvl-spec/pull/8).
 - ✅ **PR-3 (unary functions)** — Function type `T1 -> T2`, lambda `\ x : T . e` (MVL surface: `|x: T| e`), unary application `e1 ( e2 )`. Two rules (T-Abs, T-App); 24 total.
 - ✅ **PR-4 (top-level fn declarations)** — `program` and `fdecl` grammar; recursive `fn f(x: T1) -> T2 { e }`; program well-formedness judgment `G |- P : T`. Two rules (Prog-Main, Prog-FnDecl); 26 total.
-- ⬜ **PR-5 — N-ary parameters** — n-ary function types, lambdas, application, and function declarations using Ott's list constructors.
+- ✅ **PR-5 (example theorems)** — `tests/examples.v` — 12 proven typing examples covering literals, arithmetic, comparison, logic, control flow, local binding, first-class functions, and top-level programs (including recursive). `make check-examples` compiles them; CI runs the whole chain. Original PR-5 (n-ary parameters via Ott lists) is deferred as [#11](https://github.com/mvl-lang/mvl-spec/issues/11) — Ott 0.34's list-in-rule syntax hit a parsing wall.
 - ⬜ **PR-6 — ADTs (structs + enums)** — `type Point = struct { x: Int, y: Int }`, struct construction, field access, enum variants.
-- ⬜ **PR-7 — Generics** — Type parameters on `fn` and `type` declarations, polymorphic types.
-- ⬜ **PR-8 — Pattern matching** — `match` with exhaustiveness side condition, pattern types (`Some(v)`, `None`, `Ok(x)`, `Err(e)`, tuples, structs, or-patterns).
-- ⬜ **PR-9 — Refinements** — `T where P`, refinement-typing judgment, solver-boundary specification.
-- ⬜ **PR-10 — Effects** — Effect judgment `Γ ⊢ e : T ! ε`, subsumption, parametrized effects.
-- ⬜ **PR-11 — IFC** — Label lattice, `Secret[T]` / `Tainted[T]`, `declassify` / `sanitize`, non-interference statement.
-- ⬜ **PR-12 — Capabilities** — `val` / `ref` / `iso`, sendability at actor boundaries.
-- ⬜ **PR-13 — Contracts** — `requires` / `ensures` / `invariant` / `decreases`; contract-typing judgment.
-- ⬜ **PR-14 — Termination** — Structural recursion, `decreases` measure, `partial` opt-out.
-- ⬜ **PR-15 — Actors** — Behaviors, mailboxes, message-send judgment (per spec 015).
-- ⬜ **PR-16 — Session types** — Protocol projection (per spec 016).
+- ⬜ **PR-6 — ADTs (structs + enums)** — `type Point = struct { x: Int, y: Int }`, struct construction, field access, enum variants.
+- ⬜ **PR-7 — Reduction semantics** — small-step operational semantics `e --> e'`, values, structural congruence rules, β-reduction (needs Ott's binding + substitution machinery — LNgen-style).
+- ⬜ **PR-8 — Generics** — Type parameters on `fn` and `type` declarations, polymorphic types.
+- ⬜ **PR-9 — Pattern matching** — `match` with exhaustiveness side condition, pattern types (`Some(v)`, `None`, `Ok(x)`, `Err(e)`, tuples, structs, or-patterns).
+- ⬜ **PR-10 — Refinements** — `T where P`, refinement-typing judgment, solver-boundary specification.
+- ⬜ **PR-11 — Effects** — Effect judgment `Γ ⊢ e : T ! ε`, subsumption, parametrized effects.
+- ⬜ **PR-12 — IFC** — Label lattice, `Secret[T]` / `Tainted[T]`, `declassify` / `sanitize`, non-interference statement.
+- ⬜ **PR-13 — Capabilities** — `val` / `ref` / `iso`, sendability at actor boundaries.
+- ⬜ **PR-14 — Contracts** — `requires` / `ensures` / `invariant` / `decreases`; contract-typing judgment.
+- ⬜ **PR-15 — Termination** — Structural recursion, `decreases` measure, `partial` opt-out.
+- ⬜ **PR-16 — Actors** — Behaviors, mailboxes, message-send judgment (per spec 015).
+- ⬜ **PR-17 — Session types** — Protocol projection (per spec 016).
+- ⬜ (Deferred) **N-ary parameters** — tracked in [#11](https://github.com/mvl-lang/mvl-spec/issues/11). Blocked on either Ott upstream fix or a semantic workaround (encode as tuples).
 
 Each PR is small and independently reviewable. The generated Coq accumulates; the Phase 9 mechanization ([#4](https://github.com/mvl-lang/mvl-spec/issues/4)) picks up from a stable snapshot when the core is done.
 
