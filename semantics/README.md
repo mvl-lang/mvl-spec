@@ -97,19 +97,19 @@ The above (layers 1–3) run automatically on every PR touching `semantics/`. Th
 - ✅ **PR-4 (top-level fn declarations)** — `program` and `fdecl` grammar; recursive `fn f(x: T1) -> T2 { e }`; program well-formedness judgment `G |- P : T`. Two rules (Prog-Main, Prog-FnDecl); 26 total.
 - ✅ **PR-5 (example theorems)** — `tests/examples.v` — 12 proven typing examples covering literals, arithmetic, comparison, logic, control flow, local binding, first-class functions, and top-level programs (including recursive). `make check-examples` compiles them; CI runs the whole chain. Original PR-5 (n-ary parameters via Ott lists) is deferred as [#11](https://github.com/mvl-lang/mvl-spec/issues/11) — Ott 0.34's list-in-rule syntax hit a parsing wall.
 - ⬜ **PR-6 — ADTs (structs + enums)** — `type Point = struct { x: Int, y: Int }`, struct construction, field access, enum variants.
-- ⬜ **PR-6 — ADTs (structs + enums)** — `type Point = struct { x: Int, y: Int }`, struct construction, field access, enum variants.
-- ⬜ **PR-7 — Reduction semantics** — small-step operational semantics `e --> e'`, values, structural congruence rules, β-reduction (needs Ott's binding + substitution machinery — LNgen-style).
-- ⬜ **PR-8 — Generics** — Type parameters on `fn` and `type` declarations, polymorphic types.
-- ⬜ **PR-9 — Pattern matching** — `match` with exhaustiveness side condition, pattern types (`Some(v)`, `None`, `Ok(x)`, `Err(e)`, tuples, structs, or-patterns).
-- ⬜ **PR-10 — Refinements** — `T where P`, refinement-typing judgment, solver-boundary specification.
-- ⬜ **PR-11 — Effects** — Effect judgment `Γ ⊢ e : T ! ε`, subsumption, parametrized effects.
-- ⬜ **PR-12 — IFC** — Label lattice, `Secret[T]` / `Tainted[T]`, `declassify` / `sanitize`, non-interference statement.
-- ⬜ **PR-13 — Capabilities** — `val` / `ref` / `iso`, sendability at actor boundaries.
-- ⬜ **PR-14 — Contracts** — `requires` / `ensures` / `invariant` / `decreases`; contract-typing judgment.
-- ⬜ **PR-15 — Termination** — Structural recursion, `decreases` measure, `partial` opt-out.
-- ⬜ **PR-16 — Actors** — Behaviors, mailboxes, message-send judgment (per spec 015).
-- ⬜ **PR-17 — Session types** — Protocol projection (per spec 016).
-- ⬜ (Deferred) **N-ary parameters** — tracked in [#11](https://github.com/mvl-lang/mvl-spec/issues/11). Blocked on either Ott upstream fix or a semantic workaround (encode as tuples).
+- ⬜ **PR-6 — ADTs (structs + enums)** — [#13](https://github.com/mvl-lang/mvl-spec/issues/13). `type Point = struct { x: Int, y: Int }`, struct construction, field access, enum variants.
+- ⬜ **PR-7 — Reduction semantics** — [#14](https://github.com/mvl-lang/mvl-spec/issues/14). Small-step operational semantics `e --> e'`, values, structural congruence, β-reduction (needs Ott's binding + substitution machinery).
+- ⬜ **PR-8 — Generics** — [#15](https://github.com/mvl-lang/mvl-spec/issues/15). Type parameters on `fn` and `type` declarations, polymorphic types.
+- ⬜ **PR-9 — Pattern matching** — [#16](https://github.com/mvl-lang/mvl-spec/issues/16). `match` with exhaustiveness side condition, pattern types.
+- ⬜ **PR-10 — Refinements** — [#17](https://github.com/mvl-lang/mvl-spec/issues/17). `T where P`, refinement-typing judgment, solver-boundary specification.
+- ⬜ **PR-11 — Effects** — [#18](https://github.com/mvl-lang/mvl-spec/issues/18). Effect judgment `Γ ⊢ e : T ! ε`, subsumption, parametrized effects.
+- ⬜ **PR-12 — IFC** — [#19](https://github.com/mvl-lang/mvl-spec/issues/19). Label lattice, `Secret[T]` / `Tainted[T]`, `declassify` / `sanitize`, non-interference statement.
+- ⬜ **PR-13 — Capabilities** — [#20](https://github.com/mvl-lang/mvl-spec/issues/20). `val` / `ref` / `iso`, sendability at actor boundaries (Pony-derived, NOT Rust borrow checker).
+- ⬜ **PR-14 — Contracts** — [#21](https://github.com/mvl-lang/mvl-spec/issues/21). `requires` / `ensures` / `invariant` / `decreases`; contract-typing judgment.
+- ⬜ **PR-15 — Termination** — [#22](https://github.com/mvl-lang/mvl-spec/issues/22). Structural recursion, `decreases` measure, `partial` opt-out.
+- ⬜ **PR-16 — Actors** — [#23](https://github.com/mvl-lang/mvl-spec/issues/23). Behaviors, mailboxes, message-send judgment (per spec 015).
+- ⬜ **PR-17 — Session types** — [#24](https://github.com/mvl-lang/mvl-spec/issues/24). Protocol projection (per spec 016).
+- ⬜ (Deferred) **N-ary parameters** — [#11](https://github.com/mvl-lang/mvl-spec/issues/11). Blocked on either Ott upstream fix or a semantic workaround (encode as tuples).
 
 Each PR is small and independently reviewable. The generated Coq accumulates; the Phase 9 mechanization ([#4](https://github.com/mvl-lang/mvl-spec/issues/4)) picks up from a stable snapshot when the core is done.
 
