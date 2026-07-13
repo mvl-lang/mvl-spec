@@ -90,17 +90,20 @@ The above (layers 1–3) run automatically on every PR touching `semantics/`. Th
 ## Roadmap for the semantics
 
 - ✅ **PR-1 (scaffold)** — Ott stub, Makefile, CI, generated/ dir. Two example rules to prove the pipeline works. Merged as [#7](https://github.com/mvl-lang/mvl-spec/pull/7).
-- ✅ **PR-2 (core language)** — Base types (`Int`, `Bool`, `String`, `Unit`), literals, arithmetic (`+ - * / %`), comparison (`== != < > <= >=`), logical (`&& || !`), `if`/`else`, `let` binding, environment-lookup semantics. 22 typing rules, `make check-coq` passes.
-- ⬜ **PR-3 — Functions and ADTs** — Function declarations, function types (`fn(A, B) -> C`), function application, structs, enums, generics.
-- ⬜ **PR-4 — Pattern matching** — `match` with exhaustiveness side condition, pattern types (`Some(v)`, `None`, `Ok(x)`, `Err(e)`, tuples, structs, or-patterns).
-- ⬜ **PR-5 — Refinements** — `T where P`, refinement-typing judgment, solver-boundary specification.
-- ⬜ **PR-6 — Effects** — Effect judgment `Γ ⊢ e : T ! ε`, subsumption, parametrized effects.
-- ⬜ **PR-7 — IFC** — Label lattice, `Secret[T]` / `Tainted[T]`, `declassify` / `sanitize`, non-interference statement.
-- ⬜ **PR-8 — Capabilities** — `val` / `ref` / `iso`, sendability at actor boundaries.
-- ⬜ **PR-9 — Contracts** — `requires` / `ensures` / `invariant` / `decreases`; contract-typing judgment.
-- ⬜ **PR-10 — Termination** — Structural recursion, `decreases` measure, `partial` opt-out.
-- ⬜ **PR-11 — Actors** — Behaviors, mailboxes, message-send judgment (per spec 015).
-- ⬜ **PR-12 — Session types** — Protocol projection (per spec 016).
+- ✅ **PR-2 (core language)** — Base types (`Int`, `Bool`, `String`, `Unit`), literals, arithmetic (`+ - * / %`), comparison (`== != < > <= >=`), logical (`&& || !`), `if`/`else`, `let` binding, environment-lookup semantics. 22 typing rules. Merged as [#8](https://github.com/mvl-lang/mvl-spec/pull/8).
+- ✅ **PR-3 (unary functions)** — Function type `T1 -> T2`, lambda `\ x : T . e` (MVL surface: `|x: T| e`), unary application `e1 ( e2 )`. Two rules (T-Abs, T-App); 24 total.
+- ⬜ **PR-4 — N-ary functions + top-level declarations** — `fn f(x: A, y: B) -> C { body }` at the program level, n-ary application `f(x, y)` using Ott's list constructors.
+- ⬜ **PR-5 — ADTs (structs + enums)** — `type Point = struct { x: Int, y: Int }`, struct construction, field access, enum variants.
+- ⬜ **PR-6 — Generics** — Type parameters on `fn` and `type` declarations, polymorphic types.
+- ⬜ **PR-7 — Pattern matching** — `match` with exhaustiveness side condition, pattern types (`Some(v)`, `None`, `Ok(x)`, `Err(e)`, tuples, structs, or-patterns).
+- ⬜ **PR-8 — Refinements** — `T where P`, refinement-typing judgment, solver-boundary specification.
+- ⬜ **PR-9 — Effects** — Effect judgment `Γ ⊢ e : T ! ε`, subsumption, parametrized effects.
+- ⬜ **PR-10 — IFC** — Label lattice, `Secret[T]` / `Tainted[T]`, `declassify` / `sanitize`, non-interference statement.
+- ⬜ **PR-11 — Capabilities** — `val` / `ref` / `iso`, sendability at actor boundaries.
+- ⬜ **PR-12 — Contracts** — `requires` / `ensures` / `invariant` / `decreases`; contract-typing judgment.
+- ⬜ **PR-13 — Termination** — Structural recursion, `decreases` measure, `partial` opt-out.
+- ⬜ **PR-14 — Actors** — Behaviors, mailboxes, message-send judgment (per spec 015).
+- ⬜ **PR-15 — Session types** — Protocol projection (per spec 016).
 
 Each PR is small and independently reviewable. The generated Coq accumulates; the Phase 9 mechanization ([#4](https://github.com/mvl-lang/mvl-spec/issues/4)) picks up from a stable snapshot when the core is done.
 
