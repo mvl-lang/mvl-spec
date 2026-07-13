@@ -38,10 +38,14 @@ help:
 	@echo "  make clean      remove $(GEN)/mvl.*"
 
 ## Syntax-only check — the fastest validation.  Ott parses the source
-## and reports any grammar or rule inconsistencies without writing files.
+## and reports any grammar or rule inconsistencies.  It requires a real
+## output file with a recognized extension, so we write to a temp path
+## and discard it.
 validate: $(SRC)
 	@command -v $(OTT) >/dev/null || { echo "error: 'ott' not on PATH — see semantics/README.md"; exit 1; }
-	$(OTT) -i $(SRC) -o /dev/null
+	@TMPDIR=$$(mktemp -d); \
+	  trap "rm -rf $$TMPDIR" EXIT; \
+	  $(OTT) -i $(SRC) -o $$TMPDIR/mvl.tex
 
 $(GEN):
 	@mkdir -p $(GEN)
@@ -52,7 +56,11 @@ $(GEN)/mvl.tex: $(SRC) | $(GEN)
 
 coq: $(GEN)/mvl.v
 $(GEN)/mvl.v: $(SRC) | $(GEN)
-	$(OTT) -i $(SRC) -o $@
+	## -coq_expand_list_types true removes the dependency on Ott's
+	## ott_list_core.v support library, which opam does not install
+	## to a standard Coq load path.  For our purposes (small proofs,
+	## no repeated list schemas) the expanded form is fine.
+	$(OTT) -i $(SRC) -o $@ -coq_expand_list_types true
 
 thy: $(GEN)/mvl.thy
 $(GEN)/mvl.thy: $(SRC) | $(GEN)

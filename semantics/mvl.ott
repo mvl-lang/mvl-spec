@@ -12,11 +12,6 @@
 %%         make thy  (Isabelle/HOL)
 %%
 
-embed
-  {{ tex-preamble
-    \newcommand{\ottMVL}{\textsc{MVL}}
-  }}
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Metavariables
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -24,10 +19,12 @@ embed
 metavar variable, x , y , z ::=
   {{ com program variable }}
   {{ lex alphanum }}
+  {{ coq nat }}
 
 metavar integer, n , m ::=
   {{ com integer literal }}
   {{ lex numeral }}
+  {{ coq nat }}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Syntax
@@ -76,8 +73,11 @@ defns
 
   %% Typing judgment Γ ⊢ e : T
   %%
-  %% Only two rules for now — enough to prove the Ott pipeline works.
-  %% Follow-up PRs add:
+  %% Two rules for now — enough to prove the Ott pipeline works and
+  %% that the generated Coq typechecks.  Deliberately omitted:
+  %%   - T-Var — needs environment-lookup semantics; lands in PR-2
+  %%             along with the full core language.
+  %% Follow-up PRs also add:
   %%   - T-Bool  (literal true/false)
   %%   - T-Let   (let binding)
   %%   - T-App   (function application)
@@ -87,12 +87,8 @@ defns
   %%   - IFC-typing judgment     Γ ⊢ e : T @ ℓ
   %%   - Refinement judgment     Γ ⊢ e : T where P
   %%   - Contract judgment       Γ ⊢ e : T requires P ensures Q
-  defn G |- e : T :: :: typing :: T_
+  defn G |- e : T :: :: typing :: Ty_
     {{ com typing judgment }} by
-
-      x : T in G
-      ---------- :: Var
-      G |- x : T
 
       ---------------- :: Int
       G |- n : Int
