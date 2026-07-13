@@ -1,16 +1,28 @@
 %%
 %% MVL — formal semantics in Ott
 %%
-%% Status: SCAFFOLD ONLY (2026-07-13). This file exists to validate the
-%% build pipeline. Real semantic content lands in follow-up PRs against
-%% https://github.com/mvl-lang/mvl-spec/issues/3.
+%% Status: PR-2 (core language). Types + expressions + let/if/return
+%% + environment lookup. Deliberately excludes: ADTs, generics,
+%% functions, pattern matching, refinements, effects, IFC,
+%% capabilities, contracts, actors, session types (later PRs).
 %%
 %% Ott reference: https://www.cl.cam.ac.uk/~pes20/ott/
 %%
-%% Build:  make tex  (LaTeX)
-%%         make coq  (Coq definitions)
-%%         make thy  (Isabelle/HOL)
+%% Build:  make tex        LaTeX
+%%         make coq        Coq definitions
+%%         make check-coq  additionally: coqc typechecks the output
 %%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Coq preamble — placed before metavar definitions.  Ott emits
+%% embeds in source order, and the `string` metavar below maps to
+%% Coq's `string` type from stdlib.  Import must come first.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+embed
+  {{ coq
+    Require Import String.
+  }}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Metavariables
@@ -26,32 +38,74 @@ metavar integer, n , m ::=
   {{ lex numeral }}
   {{ coq nat }}
 
+metavar string, s ::=
+  {{ com string literal }}
+  {{ lex Alphanum }}
+  {{ coq string }}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Syntax
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 grammar
 
-  %% Types.  Minimal scaffold — real MVL types (ADTs, generics, refinements,
-  %% effects, capabilities, labels) land in follow-up PRs.
+  %% Types.  This PR covers the four ground types only.  ADTs,
+  %% generics, refinements, effects, capabilities, and labels land in
+  %% follow-up PRs.
   T :: 'T_' ::=                    {{ com types }}
-    | Int                          :: :: Int  {{ com integer type }}
-    | Bool                         :: :: Bool {{ com boolean type }}
-    | Unit                         :: :: Unit {{ com unit type }}
+    | Int                          :: :: Int    {{ com integer type }}
+    | Bool                         :: :: Bool   {{ com boolean type }}
+    | String                       :: :: String {{ com string type }}
+    | Unit                         :: :: Unit   {{ com unit type }}
 
-  %% Expressions.  Minimal scaffold — real MVL expressions (match, if-let,
-  %% method calls, actor spawn, propagate `?`, refinements, effects) land
-  %% in follow-up PRs.
-  e :: 'e_' ::=                    {{ com expressions }}
-    | x                            :: :: Var  {{ com variable }}
-    | n                            :: :: Int  {{ com integer literal }}
-    | e1 + e2                      :: :: Plus {{ com addition }}
-    | ( e )                        :: S :: Paren  {{ ich [[e]] }}
+  %% Booleans as a separate syntactic category to avoid literal-vs-type
+  %% ambiguity in the ASCII source.  `b_true` and `b_false` are the
+  %% metavariables for boolean literals in rule premises.
+  b :: 'b_' ::=                    {{ com boolean literal }}
+    | true                         :: :: True
+    | false                        :: :: False
+
+  %% Arithmetic and comparison operators are inlined in the expression
+  %% grammar to keep the LL(1) property visible.  Ott sees them as
+  %% distinct constructors, which is what we want for pattern matching
+  %% in the Coq output.
+  e :: 'e_' ::=                                        {{ com expressions }}
+    | x                            :: :: Var           {{ com variable }}
+    | n                            :: :: Int           {{ com integer literal }}
+    | b                            :: :: Bool          {{ com boolean literal }}
+    | " s "                        :: :: String        {{ com string literal }}
+    | unit                         :: :: Unit          {{ com unit literal }}
+    | e1 + e2                      :: :: Plus          {{ com addition }}
+    | e1 - e2                      :: :: Minus         {{ com subtraction }}
+    | e1 * e2                      :: :: Times         {{ com multiplication }}
+    | e1 / e2                      :: :: Div           {{ com division }}
+    | e1 % e2                      :: :: Mod           {{ com modulo }}
+    | e1 == e2                     :: :: Eq            {{ com equality }}
+    | e1 != e2                     :: :: Neq           {{ com disequality }}
+    | e1 < e2                      :: :: Lt            {{ com less than }}
+    | e1 > e2                      :: :: Gt            {{ com greater than }}
+    | e1 <= e2                     :: :: Le            {{ com less-or-equal }}
+    | e1 >= e2                     :: :: Ge            {{ com greater-or-equal }}
+    | e1 && e2                     :: :: And           {{ com logical and }}
+    | e1 || e2                     :: :: Or            {{ com logical or }}
+    | ! e                          :: :: Not           {{ com logical not }}
+    | if e1 then e2 else e3        :: :: If            {{ com conditional }}
+    | let x : T = e1 in e2         :: :: Let           {{ com local binding }}
+    | ( e )                        :: S :: Paren       {{ ich [[e]] }}
 
   %% Typing environments Γ : x -> T
   G {{ tex \Gamma }} :: 'G_' ::=   {{ com typing environment }}
     | empty                        :: :: Empty {{ com [[empty]] }}
     | G , x : T                    :: :: Cons  {{ com extend Γ with x:T }}
+
+  %% Custom formulae that appear as premises in typing rules.
+  %% `x : T in G` denotes environment lookup and is defined
+  %% semantically in the Coq embed below (env_lookup).
+  formula :: 'formula_' ::=
+    | judgement                    :: :: judgement
+    | x : T in G                   :: :: xTinG
+      {{ tex [[x]]:[[T]] \in [[G]] }}
+      {{ coq (env_lookup [[G]] [[x]] = Some [[T]]) }}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Terminals
@@ -63,37 +117,160 @@ terminals :: 'terminals_' ::=
   | ,                              :: :: comma
   | in                             :: :: in    {{ tex \in }}
   | ->                             :: :: arrow {{ tex \rightarrow }}
+  | !=                             :: :: neq   {{ tex \neq }}
+  | <=                             :: :: le    {{ tex \le }}
+  | >=                             :: :: ge    {{ tex \ge }}
+  | &&                             :: :: and   {{ tex \wedge }}
+  | \|\|                           :: :: or    {{ tex \vee }}
+  | !                              :: :: not   {{ tex \neg }}
+  | ==                             :: :: eq    {{ tex \equiv }}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Judgments
+%% Coq embed — env_lookup implementation.  Placed after the
+%% metavar/syntax definitions (which introduce G, T, variable) but
+%% before the typing judgment (which uses env_lookup via the
+%% `x : T in G` formula).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+embed
+  {{ coq
+    Fixpoint env_lookup (env : G) (x : variable) : option T :=
+      match env with
+      | G_Empty => None
+      | G_Cons env' y ty =>
+          if Nat.eqb x y then Some ty else env_lookup env' x
+      end.
+  }}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Typing judgment  Γ ⊢ e : T
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 defns
   Jtype :: '' ::=
 
-  %% Typing judgment Γ ⊢ e : T
-  %%
-  %% Two rules for now — enough to prove the Ott pipeline works and
-  %% that the generated Coq typechecks.  Deliberately omitted:
-  %%   - T-Var — needs environment-lookup semantics; lands in PR-2
-  %%             along with the full core language.
-  %% Follow-up PRs also add:
-  %%   - T-Bool  (literal true/false)
-  %%   - T-Let   (let binding)
-  %%   - T-App   (function application)
-  %%   - T-If    (if expression)
-  %%   - T-Match (pattern match, with exhaustiveness side condition)
-  %%   - Effect-typing judgment  Γ ⊢ e : T ! ε
-  %%   - IFC-typing judgment     Γ ⊢ e : T @ ℓ
-  %%   - Refinement judgment     Γ ⊢ e : T where P
-  %%   - Contract judgment       Γ ⊢ e : T requires P ensures Q
   defn G |- e : T :: :: typing :: Ty_
     {{ com typing judgment }} by
 
-      ---------------- :: Int
+    %%--- Base types ----------------------------------------------
+
+      x : T in G
+      ---------- :: Var
+      G |- x : T
+
+      -------------- :: Int
       G |- n : Int
+
+      ---------------- :: True
+      G |- true : Bool
+
+      ------------------ :: False
+      G |- false : Bool
+
+      ------------------ :: String
+      G |- " s " : String
+
+      ----------------- :: Unit
+      G |- unit : Unit
+
+    %%--- Arithmetic ----------------------------------------------
+    %% All arithmetic ops require both operands to be Int and
+    %% produce Int.  MVL rejects mixed arithmetic (no implicit
+    %% conversions — DP 1, "Explicit over implicit").
 
       G |- e1 : Int
       G |- e2 : Int
       ------------------- :: Plus
       G |- e1 + e2 : Int
+
+      G |- e1 : Int
+      G |- e2 : Int
+      ------------------- :: Minus
+      G |- e1 - e2 : Int
+
+      G |- e1 : Int
+      G |- e2 : Int
+      ------------------- :: Times
+      G |- e1 * e2 : Int
+
+      G |- e1 : Int
+      G |- e2 : Int
+      ------------------- :: Div
+      G |- e1 / e2 : Int
+
+      G |- e1 : Int
+      G |- e2 : Int
+      ------------------- :: Mod
+      G |- e1 % e2 : Int
+
+    %%--- Comparison ----------------------------------------------
+    %% Ordered comparison is Int-only.  Equality is monomorphic per
+    %% type — Int==Int and Bool==Bool are separate rules to preserve
+    %% the "no implicit conversions" invariant.  Full polymorphic
+    %% equality lands with generics in PR-3.
+
+      G |- e1 : Int
+      G |- e2 : Int
+      -------------------- :: EqInt
+      G |- e1 == e2 : Bool
+
+      G |- e1 : Int
+      G |- e2 : Int
+      -------------------- :: NeqInt
+      G |- e1 != e2 : Bool
+
+      G |- e1 : Int
+      G |- e2 : Int
+      -------------------- :: Lt
+      G |- e1 < e2 : Bool
+
+      G |- e1 : Int
+      G |- e2 : Int
+      -------------------- :: Gt
+      G |- e1 > e2 : Bool
+
+      G |- e1 : Int
+      G |- e2 : Int
+      -------------------- :: Le
+      G |- e1 <= e2 : Bool
+
+      G |- e1 : Int
+      G |- e2 : Int
+      -------------------- :: Ge
+      G |- e1 >= e2 : Bool
+
+    %%--- Logical ------------------------------------------------
+
+      G |- e1 : Bool
+      G |- e2 : Bool
+      -------------------- :: And
+      G |- e1 && e2 : Bool
+
+      G |- e1 : Bool
+      G |- e2 : Bool
+      -------------------- :: Or
+      G |- e1 || e2 : Bool
+
+      G |- e : Bool
+      ---------------- :: Not
+      G |- ! e : Bool
+
+    %%--- Control flow -------------------------------------------
+    %% `if e1 then e2 else e3` requires e1 : Bool and both branches
+    %% to agree on a single type T — MVL's exhaustiveness discipline.
+
+      G |- e1 : Bool
+      G |- e2 : T
+      G |- e3 : T
+      ------------------------------------ :: If
+      G |- if e1 then e2 else e3 : T
+
+    %%--- Local binding ------------------------------------------
+    %% `let x : T = e1 in e2` — MVL requires the explicit type
+    %% annotation on the binding (DP 1, "Explicit over implicit").
+    %% e2 is type-checked in an extended environment.
+
+      G |- e1 : T
+      G , x : T |- e2 : T'
+      ------------------------------------ :: Let
+      G |- let x : T = e1 in e2 : T'
