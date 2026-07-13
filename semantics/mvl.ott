@@ -1,10 +1,18 @@
 %%
 %% MVL — formal semantics in Ott
 %%
-%% Status: PR-2 (core language). Types + expressions + let/if/return
-%% + environment lookup. Deliberately excludes: ADTs, generics,
-%% functions, pattern matching, refinements, effects, IFC,
-%% capabilities, contracts, actors, session types (later PRs).
+%% Status: PR-3 (unary functions). Adds function type `T1 -> T2`,
+%% lambda `\ x : T . e`, and application `e1 ( e2 )` on top of
+%% PR-2's core language.  Deliberately excludes: n-ary functions,
+%% top-level `fn` declarations, ADTs, generics, pattern matching,
+%% refinements, effects, IFC, capabilities, contracts, actors,
+%% session types (later PRs).
+%%
+%% Note on surface syntax: MVL uses `|x: T| e` for lambdas and
+%% `f(x1, x2)` for n-ary application.  This Ott spec uses `\` for
+%% lambda (avoids conflict with Ott's grammar-alternation `|`) and
+%% unary application `e1 ( e2 )`.  N-ary functions land with Ott's
+%% list constructors in a follow-up PR.
 %%
 %% Ott reference: https://www.cl.cam.ac.uk/~pes20/ott/
 %%
@@ -49,14 +57,16 @@ metavar string, s ::=
 
 grammar
 
-  %% Types.  This PR covers the four ground types only.  ADTs,
-  %% generics, refinements, effects, capabilities, and labels land in
-  %% follow-up PRs.
+  %% Types.  Four ground types plus unary function type.  ADTs,
+  %% generics, refinements, effects, capabilities, and labels land
+  %% in follow-up PRs.
   T :: 'T_' ::=                    {{ com types }}
     | Int                          :: :: Int    {{ com integer type }}
     | Bool                         :: :: Bool   {{ com boolean type }}
     | String                       :: :: String {{ com string type }}
     | Unit                         :: :: Unit   {{ com unit type }}
+    | T1 -> T2                     :: :: Fn     {{ com function type }}
+    | ( T )                        :: S :: Paren {{ ich [[T]] }}
 
   %% Booleans as a separate syntactic category to avoid literal-vs-type
   %% ambiguity in the ASCII source.  `b_true` and `b_false` are the
@@ -91,6 +101,9 @@ grammar
     | ! e                          :: :: Not           {{ com logical not }}
     | if e1 then e2 else e3        :: :: If            {{ com conditional }}
     | let x : T = e1 in e2         :: :: Let           {{ com local binding }}
+    | \ x : T . e                  :: :: Lam           {{ com lambda; MVL surface: |x: T| e }}
+      {{ tex \lambda [[x]]{:}[[T]] . \, [[e]] }}
+    | e1 ( e2 )                    :: :: App           {{ com application }}
     | ( e )                        :: S :: Paren       {{ ich [[e]] }}
 
   %% Typing environments Γ : x -> T
@@ -124,6 +137,8 @@ terminals :: 'terminals_' ::=
   | \|\|                           :: :: or    {{ tex \vee }}
   | !                              :: :: not   {{ tex \neg }}
   | ==                             :: :: eq    {{ tex \equiv }}
+  | \                              :: :: lambda {{ tex \lambda }}
+  | .                              :: :: dot
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Coq embed — env_lookup implementation.  Placed after the
@@ -274,3 +289,17 @@ defns
       G , x : T |- e2 : T'
       ------------------------------------ :: Let
       G |- let x : T = e1 in e2 : T'
+
+    %%--- Functions ----------------------------------------------
+    %% Standard STLC abstraction + application, with mandatory
+    %% argument type annotation (DP 1).  Ott uses `\` for lambda;
+    %% MVL surface syntax is `|x: T| e`.
+
+      G , x : T1 |- e : T2
+      ------------------------------------ :: Abs
+      G |- \ x : T1 . e : T1 -> T2
+
+      G |- e1 : T1 -> T2
+      G |- e2 : T1
+      ------------------------------------ :: App
+      G |- e1 ( e2 ) : T2
