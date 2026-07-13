@@ -1,0 +1,120 @@
+# MVL Reserved Keywords — Single Source of Truth
+#
+# This file is the canonical list of MVL reserved keywords, organized by
+# semantic category. All parsers, lexers, and syntax highlighters MUST
+# generate their keyword tables from this file.
+#
+# Consumers:
+#   - tools/tree-sitter/grammar.js   (via tools/generators/gen_tree_sitter.js)
+#   - tools/pygments/mvl_pygments/   (via tools/generators/gen_pygments.py)
+#   - editors/vscode/syntaxes/       (via tools/generators/gen_vscode.js)
+#   - The MVL compiler (mvl/src/mvl/parser/lexer.rs) — currently hand-maintained,
+#     to be regenerated from this file as a future consistency-check target.
+#
+# Rule: adding a keyword requires updating this file + the EBNF in
+# grammar.ebnf in the same PR. Drift is a CI failure (see .github/workflows/
+# check-drift.yml).
+
+declaration:
+  - fn
+  - type
+  - const
+  - use
+  - pub
+  - extern
+  - impl
+  - builtin
+  - struct
+  - enum
+  - actor
+  - effect
+  - test
+
+totality:
+  - total
+  - partial
+
+cast:
+  - as
+
+control_flow:
+  - if
+  - else
+  - for
+  - in
+  - while
+  - match
+  - return
+  - select
+
+let_binding:
+  - let
+  - ghost
+
+ownership:
+  - iso
+  - val
+  - ref
+  - tag
+  - consume
+
+ifc:
+  - label
+  - relabel
+  - declassify
+  - sanitize
+
+boolean:
+  - "true"
+  - "false"
+
+refinements:
+  - where
+  - self
+  - old
+  - requires
+  - ensures
+  - invariant
+  - with
+  - decreases
+  - forall
+  - exists
+
+pattern:
+  - Some
+  - None
+  - Ok
+  - Err
+
+# Type-level identifiers that are effectively reserved by convention
+# (not enforced as reserved words by the lexer, but users should not shadow).
+builtin_types:
+  - Int
+  - Int8
+  - Int16
+  - Int32
+  - Int64
+  - UInt8
+  - UInt16
+  - UInt32
+  - UInt64
+  - Float
+  - Float32
+  - Float64
+  - Bool
+  - Char
+  - Byte
+  - String
+  - Unit
+  - Option
+  - Result
+  - List
+  - Array
+  - Map
+  - Set
+
+# Security labels — parsed as identifiers but semantically distinguished.
+security_labels:
+  - Public
+  - Tainted
+  - Secret
