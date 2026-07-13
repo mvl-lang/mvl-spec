@@ -89,16 +89,18 @@ The above (layers 1–3) run automatically on every PR touching `semantics/`. Th
 
 ## Roadmap for the semantics
 
-- ✅ **PR-1 (this scaffold)** — Ott stub, Makefile, CI, generated/ dir. Two example rules to prove the pipeline works.
-- ⬜ **PR-2 — Core language** — Full syntax mirror of `grammar/grammar.ebnf`; typing rules for base types, ADTs, generics, `let`, `if`, `match`.
-- ⬜ **PR-3 — Refinements** — `T where P`, refinement-typing judgment, solver-boundary specification.
-- ⬜ **PR-4 — Effects** — Effect judgment `Γ ⊢ e : T ! ε`, subsumption, parametrized effects.
-- ⬜ **PR-5 — IFC** — Label lattice, `Secret[T]` / `Tainted[T]`, `declassify` / `sanitize`, non-interference statement.
-- ⬜ **PR-6 — Capabilities** — `val` / `ref` / `iso`, sendability at actor boundaries.
-- ⬜ **PR-7 — Contracts** — `requires` / `ensures` / `invariant` / `decreases`; contract-typing judgment.
-- ⬜ **PR-8 — Termination** — Structural recursion, `decreases` measure, `partial` opt-out.
-- ⬜ **PR-9 — Actors** — Behaviors, mailboxes, message-send judgment (per spec 015).
-- ⬜ **PR-10 — Session types** — Protocol projection (per spec 016).
+- ✅ **PR-1 (scaffold)** — Ott stub, Makefile, CI, generated/ dir. Two example rules to prove the pipeline works. Merged as [#7](https://github.com/mvl-lang/mvl-spec/pull/7).
+- ✅ **PR-2 (core language)** — Base types (`Int`, `Bool`, `String`, `Unit`), literals, arithmetic (`+ - * / %`), comparison (`== != < > <= >=`), logical (`&& || !`), `if`/`else`, `let` binding, environment-lookup semantics. 22 typing rules, `make check-coq` passes.
+- ⬜ **PR-3 — Functions and ADTs** — Function declarations, function types (`fn(A, B) -> C`), function application, structs, enums, generics.
+- ⬜ **PR-4 — Pattern matching** — `match` with exhaustiveness side condition, pattern types (`Some(v)`, `None`, `Ok(x)`, `Err(e)`, tuples, structs, or-patterns).
+- ⬜ **PR-5 — Refinements** — `T where P`, refinement-typing judgment, solver-boundary specification.
+- ⬜ **PR-6 — Effects** — Effect judgment `Γ ⊢ e : T ! ε`, subsumption, parametrized effects.
+- ⬜ **PR-7 — IFC** — Label lattice, `Secret[T]` / `Tainted[T]`, `declassify` / `sanitize`, non-interference statement.
+- ⬜ **PR-8 — Capabilities** — `val` / `ref` / `iso`, sendability at actor boundaries.
+- ⬜ **PR-9 — Contracts** — `requires` / `ensures` / `invariant` / `decreases`; contract-typing judgment.
+- ⬜ **PR-10 — Termination** — Structural recursion, `decreases` measure, `partial` opt-out.
+- ⬜ **PR-11 — Actors** — Behaviors, mailboxes, message-send judgment (per spec 015).
+- ⬜ **PR-12 — Session types** — Protocol projection (per spec 016).
 
 Each PR is small and independently reviewable. The generated Coq accumulates; the Phase 9 mechanization ([#4](https://github.com/mvl-lang/mvl-spec/issues/4)) picks up from a stable snapshot when the core is done.
 
