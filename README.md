@@ -118,12 +118,11 @@ MVL is defined by eleven properties the compiler verifies at compile time. The f
 - ✅ Keyword source of truth
 - ✅ Tree-sitter grammar
 - ✅ Editor integrations (Neovim, VS Code, Zed)
-- 🔄 Pygments lexer (tracked in [mvl#1812](https://github.com/mvl-lang/mvl/issues/1812))
-- 🔄 Generator scripts (regenerate keyword tables from `keywords.yaml`)
-- ⬜ Prose language reference (currently in the mvl repo at `docs/reference/`, to be moved here)
-- ⬜ Ott semantics (types, effects, IFC, contracts, actors)
-- ⬜ Generated Coq definitions from Ott
-- ⬜ Lean 4 mechanization (Phase 9 of the MVL project)
+- 🔄 Pygments lexer — [#1](https://github.com/mvl-lang/mvl-spec/issues/1)
+- 🔄 Generator scripts (regenerate keyword tables from `keywords.yaml`) — [#2](https://github.com/mvl-lang/mvl-spec/issues/2)
+- ⬜ Ott semantics (types, effects, IFC, contracts, actors) — [#3](https://github.com/mvl-lang/mvl-spec/issues/3)
+- ⬜ Lean 4 mechanization + soundness theorem (Phase 9) — [#4](https://github.com/mvl-lang/mvl-spec/issues/4)
+- ⬜ Prose language reference migrated from mvl repo — [#5](https://github.com/mvl-lang/mvl-spec/issues/5)
 
 ---
 
