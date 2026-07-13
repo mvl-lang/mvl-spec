@@ -1,12 +1,13 @@
 %%
 %% MVL — formal semantics in Ott
 %%
-%% Status: PR-3 (unary functions). Adds function type `T1 -> T2`,
-%% lambda `\ x : T . e`, and application `e1 ( e2 )` on top of
-%% PR-2's core language.  Deliberately excludes: n-ary functions,
-%% top-level `fn` declarations, ADTs, generics, pattern matching,
-%% refinements, effects, IFC, capabilities, contracts, actors,
-%% session types (later PRs).
+%% Status: PR-4 (top-level fn declarations). Adds `program` and
+%% `fdecl` grammar; recursive function declarations `fn f(x: T1)
+%% -> T2 { e }`; well-formedness judgment for programs.  On top
+%% of PR-3's unary lambdas + application.  Deliberately excludes:
+%% n-ary parameters (Ott list constructors), ADTs, generics,
+%% pattern matching, refinements, effects, IFC, capabilities,
+%% contracts, actors, session types (later PRs).
 %%
 %% Note on surface syntax: MVL uses `|x: T| e` for lambdas and
 %% `f(x1, x2)` for n-ary application.  This Ott spec uses `\` for
@@ -36,8 +37,8 @@ embed
 %% Metavariables
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-metavar variable, x , y , z ::=
-  {{ com program variable }}
+metavar variable, x , y , z , f , g ::=
+  {{ com program variable (includes function names) }}
   {{ lex alphanum }}
   {{ coq nat }}
 
@@ -106,7 +107,26 @@ grammar
     | e1 ( e2 )                    :: :: App           {{ com application }}
     | ( e )                        :: S :: Paren       {{ ich [[e]] }}
 
-  %% Typing environments Γ : x -> T
+  %% Top-level function declaration.
+  %%   fn f ( x : T1 ) -> T2 { e }
+  %% Recursive by default — the body sees `f` in scope, bound to
+  %% its declared type `T1 -> T2`.  Non-recursive is a special
+  %% case (body simply doesn't reference `f`).  Unary parameters
+  %% only for now; n-ary lands with Ott list constructors.
+  fdecl :: 'fdecl_' ::=            {{ com function declaration }}
+    | fn f ( x : T1 ) -> T2 { e }  :: :: FnDecl
+
+  %% A program is a sequence of function declarations followed by
+  %% a `main` expression.  Simplest model that lets us state
+  %% program-level well-formedness.  Multi-file / module structure
+  %% lands in a later PR alongside imports.
+  P :: 'P_' ::=                    {{ com program }}
+    | empty                        :: :: Empty {{ com [[empty]] }}
+    | fdecl ; P                    :: :: Cons  {{ com declaration then rest }}
+    | main e                       :: :: Main  {{ com program body — the expression to evaluate }}
+
+  %% Typing environments Γ : x -> T.  Function names are just
+  %% variables bound to function types — no separate namespace.
   G {{ tex \Gamma }} :: 'G_' ::=   {{ com typing environment }}
     | empty                        :: :: Empty {{ com [[empty]] }}
     | G , x : T                    :: :: Cons  {{ com extend Γ with x:T }}
@@ -303,3 +323,25 @@ defns
       G |- e2 : T1
       ------------------------------------ :: App
       G |- e1 ( e2 ) : T2
+
+  %%--- Top-level function declarations & programs -------------
+  %% Program well-formedness:  G |- P : T
+  %%   Under environment G, program P typechecks and its main
+  %%   expression has type T.  Function declarations extend G
+  %%   as they land.  Functions are recursive by default —
+  %%   f is in scope inside its own body.
+
+  defn G |- P : T :: :: prog :: Prog_
+    {{ com program well-formedness }} by
+
+      G |- e : T
+      -------------------- :: Main
+      G |- main e : T
+
+      %% Well-typed function declaration extends the environment
+      %% with `f : T1 -> T2`; recursive because the body `e` sees
+      %% `f` in scope.
+      G , f : T1 -> T2 , x : T1 |- e : T2
+      G , f : T1 -> T2 |- P : T
+      -------------------------------------------- :: FnDecl
+      G |- fn f ( x : T1 ) -> T2 { e } ; P : T
