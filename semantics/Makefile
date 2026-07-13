@@ -23,19 +23,20 @@ PDFLATEX := pdflatex
 SRC      := mvl.ott
 GEN      := generated
 
-.PHONY: all validate tex coq thy check-coq check-tex clean help
+.PHONY: all validate tex coq thy check-coq check-tex check-examples clean help
 
 all: validate tex coq thy
 
 help:
 	@echo "MVL semantics build targets:"
-	@echo "  make validate   syntax-check the Ott source"
-	@echo "  make tex        generate LaTeX at $(GEN)/mvl.tex"
-	@echo "  make coq        generate Coq at $(GEN)/mvl.v"
-	@echo "  make thy        generate Isabelle at $(GEN)/mvl.thy"
-	@echo "  make check-coq  additionally: coqc on generated Coq"
-	@echo "  make check-tex  additionally: pdflatex on generated LaTeX"
-	@echo "  make clean      remove $(GEN)/mvl.*"
+	@echo "  make validate         syntax-check the Ott source"
+	@echo "  make tex              generate LaTeX at $(GEN)/mvl.tex"
+	@echo "  make coq              generate Coq at $(GEN)/mvl.v"
+	@echo "  make thy              generate Isabelle at $(GEN)/mvl.thy"
+	@echo "  make check-coq        additionally: coqc on generated Coq"
+	@echo "  make check-examples   additionally: coqc on tests/examples.v"
+	@echo "  make check-tex        additionally: pdflatex on generated LaTeX"
+	@echo "  make clean            remove build artifacts"
 
 ## Syntax-only check — the fastest validation.  Ott parses the source
 ## and reports any grammar or rule inconsistencies.  It requires a real
@@ -76,6 +77,17 @@ check-tex: tex
 	@command -v $(PDFLATEX) >/dev/null || { echo "error: 'pdflatex' not on PATH"; exit 1; }
 	cd $(GEN) && $(PDFLATEX) -interaction=nonstopmode mvl.tex
 
+## Example proofs — a growing regression suite of well-typed
+## MVL programs.  Every new typing rule should ideally get at
+## least one example theorem.  Detects spec bugs immediately
+## when a change breaks previously-working proofs.
+check-examples: coq
+	@command -v $(COQC) >/dev/null || { echo "error: 'coqc' not on PATH"; exit 1; }
+	cp $(GEN)/mvl.v tests/mvl.v
+	cd tests && $(COQC) mvl.v && $(COQC) examples.v
+	@rm -f tests/mvl.v tests/*.glob tests/*.vok tests/*.vos
+
 clean:
 	rm -f $(GEN)/mvl.tex $(GEN)/mvl.v $(GEN)/mvl.thy
 	rm -f $(GEN)/*.aux $(GEN)/*.log $(GEN)/*.pdf $(GEN)/*.vo $(GEN)/*.glob $(GEN)/*.vok $(GEN)/*.vos
+	rm -f tests/*.vo tests/*.glob tests/*.vok tests/*.vos tests/mvl.v

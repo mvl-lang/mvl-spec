@@ -53,6 +53,10 @@ jobs:
         working-directory: semantics
         run: make check-coq
 
+      - name: Run example theorems
+        working-directory: semantics
+        run: make check-examples
+
       - name: Upload generated outputs as CI artifact
         uses: actions/upload-artifact@v4
         with:

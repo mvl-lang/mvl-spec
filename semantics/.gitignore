@@ -22,3 +22,11 @@ generated/*.glob
 # Isabelle intermediates
 generated/.thumb
 generated/Isabelle.session
+
+# Test artifacts — mvl.v is copied into tests/ for coqc, then removed
+tests/mvl.v
+tests/*.vo
+tests/*.vok
+tests/*.vos
+tests/*.glob
+tests/.*.aux
