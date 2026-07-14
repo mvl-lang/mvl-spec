@@ -89,13 +89,30 @@ The above (layers 1–3) run automatically on every PR touching `semantics/`. Th
 
 ---
 
+## Corpus alignment
+
+`tests/examples.v` mirrors [`mvl-lang/mvl/tests/corpus/`](https://github.com/mvl-lang/mvl/tree/main/tests/corpus) so that every corpus test file has a corresponding semantic theorem (when the rules exist) or a TODO pointer (when they don't yet). This is the empirical side of the correspondence work discussed in the personal notes at `work/mvl_correspondence.md` (Ben) and cross-referenced from mvl#1823.
+
+| Corpus suite | Files | Semantically covered? | Blocker (if any) |
+|--------------|-------|----------------------|------------------|
+| `00_smoke` | arithmetic, assertions, hello | Arithmetic ✅; assertions + hello ⏳ | PR-11 (effects, #18) for println/assert_eq |
+| `01_expressions` | bool, int, precedence | ✅ Fully covered | — |
+| `02_control_flow` | if, early return, match, while | `if` ✅; rest ⏳ | PR-9 (#16) for match; new rules for `while`/`return` |
+| `03_functions` | basic, HOF, generic, total/partial | Basic + HOF ✅ | PR-8 (#15) for generics; PR-15 (#22) for total/partial |
+| `04_types` | struct, enum, enum-payload, Option/Result | ⏳ | PR-6 (#13) for ADTs; PR-8 (#15) for Option/Result generics |
+| `05_collections` | list, map, set, iter | (library, not language) | Not a semantics target |
+
+**Current coverage: ~40%** of corpus suites have semantic-side proofs. Every future semantic PR should grow `examples.v` alongside the rules it adds. When a rule lands here and the corresponding corpus test starts passing under a hypothetical `mvl/semantics` backend column (see mvl#1823), the correspondence for that feature is confirmed.
+
+---
+
 ## Roadmap for the semantics
 
 - ✅ **PR-1 (scaffold)** — Ott stub, Makefile, CI, generated/ dir. Two example rules to prove the pipeline works. Merged as [#7](https://github.com/mvl-lang/mvl-spec/pull/7).
 - ✅ **PR-2 (core language)** — Base types (`Int`, `Bool`, `String`, `Unit`), literals, arithmetic (`+ - * / %`), comparison (`== != < > <= >=`), logical (`&& || !`), `if`/`else`, `let` binding, environment-lookup semantics. 22 typing rules. Merged as [#8](https://github.com/mvl-lang/mvl-spec/pull/8).
 - ✅ **PR-3 (unary functions)** — Function type `T1 -> T2`, lambda `\ x : T . e` (MVL surface: `|x: T| e`), unary application `e1 ( e2 )`. Two rules (T-Abs, T-App); 24 total.
 - ✅ **PR-4 (top-level fn declarations)** — `program` and `fdecl` grammar; recursive `fn f(x: T1) -> T2 { e }`; program well-formedness judgment `G |- P : T`. Two rules (Prog-Main, Prog-FnDecl); 26 total.
-- ✅ **PR-5 (example theorems)** — `tests/examples.v` — 12 proven typing examples covering literals, arithmetic, comparison, logic, control flow, local binding, first-class functions, and top-level programs (including recursive). `make check-examples` compiles them; CI runs the whole chain. Original PR-5 (n-ary parameters via Ott lists) is deferred as [#11](https://github.com/mvl-lang/mvl-spec/issues/11) — Ott 0.34's list-in-rule syntax hit a parsing wall.
+- ✅ **PR-5 (example theorems + corpus alignment)** — `tests/examples.v` is now organized to mirror [mvl-lang/mvl/tests/corpus/](https://github.com/mvl-lang/mvl/tree/main/tests/corpus). 24 proven typing examples cover corpus suites 00_smoke, 01_expressions, 02_control_flow (if only), and 03_functions (basic + HOF). Each section names the corpus file it mirrors; sections without semantic coverage carry TODO markers pointing to the future PR that unlocks them. `make check-examples` compiles all proofs. Together with mvl#1823's uniform corpus, this is the empirical foundation for the differential-testing correspondence. Original PR-5 (n-ary parameters via Ott lists) is deferred as [#11](https://github.com/mvl-lang/mvl-spec/issues/11).
 - ⬜ **PR-6 — ADTs (structs + enums)** — `type Point = struct { x: Int, y: Int }`, struct construction, field access, enum variants.
 - ⬜ **PR-6 — ADTs (structs + enums)** — [#13](https://github.com/mvl-lang/mvl-spec/issues/13). `type Point = struct { x: Int, y: Int }`, struct construction, field access, enum variants.
 - ⬜ **PR-7 — Reduction semantics** — [#14](https://github.com/mvl-lang/mvl-spec/issues/14). Small-step operational semantics `e --> e'`, values, structural congruence, β-reduction (needs Ott's binding + substitution machinery).
