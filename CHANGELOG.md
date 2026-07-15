@@ -10,6 +10,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). While t
 
 ## [Unreleased]
 
+### Fixed
+
+- **Grammar drift with compiler parser** — reconciled `grammar/grammar.ebnf` and
+  `grammar/keywords.yaml` with the actual parser in `mvl-lang/mvl`:
+  - Removed obsolete `security` prefix (`public` / `tainted` / `secret`) from
+    `fn_decl`; security is expressed only via wrapper types (`Tainted[T]`, `Secret[T]`).
+  - Removed obsolete `declassify(e)` and `sanitize(e)` expression forms; both
+    were replaced by `relabel name(e, "TAG")` under #894. Also removed from
+    `keywords.yaml` `ifc:` section.
+  - Fixed `forall` / `exists` separator from `"."` to `","` to match the parser.
+  - Dropped trailing `";"` from `label_decl`, `relabel_decl`, and `effect_decl`
+    (the parser does not consume one).
+  - Made trailing comma on `match_arm` optional (it is a separator, not terminator).
+  - Clarified that `timeout` inside `select` is a *contextual* identifier, not a
+    reserved keyword.
+
 ## [0.1.0] — 2026-07-13
 
 Initial spec release. Content migrated from `mvl-lang/mvl` (see [mvl#1813](https://github.com/mvl-lang/mvl/issues/1813) for the corresponding cleanup on the compiler side).
