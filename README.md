@@ -21,6 +21,7 @@ mvl-spec/
 ├── tools/            # Language tooling that ships to package registries
 │   ├── tree-sitter/     tree-sitter-mvl (published to npm)
 │   ├── pygments/        pygments-mvl (published to PyPI) — planned
+│   ├── lsp/             mvl-lsp Phase 1 language server (published to PyPI)
 │   └── generators/      Scripts that derive tooling from grammar/keywords.yaml
 └── editors/          # Editor integrations
     ├── nvim/            Neovim plugin
@@ -78,6 +79,7 @@ Everything shippable is versioned independently. The spec itself has one version
 | Full spec release | `0.1.0` | `spec-v*` | GitHub Releases (Zenodo DOI planned) | *(repo root)* |
 | tree-sitter grammar | `0.1.0` | `tree-sitter-v*` | npm as `tree-sitter-mvl` | `tools/tree-sitter/` |
 | Pygments lexer | *(pending #1)* | `pygments-v*` | PyPI as `pygments-mvl` | `tools/pygments/` |
+| Language server (Phase 1) | `0.1.0` | `lsp-v*` | PyPI as `mvl-lsp` | `tools/lsp/` |
 | VS Code extension | `0.1.0` | `vscode-v*` | VS Code Marketplace + Open VSX | `editors/vscode/` |
 | Zed extension | `0.1.0` | `zed-v*` | Zed Extensions | `editors/zed/` |
 | Neovim plugin | `0.1.0` | `nvim-v*` | git only (users install by URL) | `editors/nvim/` |
@@ -131,6 +133,8 @@ MVL is defined by eleven properties the compiler verifies at compile time. The f
 - ✅ Keyword source of truth
 - ✅ Tree-sitter grammar
 - ✅ Editor integrations (Neovim, VS Code, Zed)
+- ✅ Phase 1 language server (`tools/lsp/`, `mvl-lsp` on PyPI) — moved from the compiler repo in [#28](https://github.com/mvl-lang/mvl-spec/issues/28)
+- 🔄 Phase 2 language server (compiler-integrated diagnostics) — [#29](https://github.com/mvl-lang/mvl-spec/issues/29)
 - 🔄 Pygments lexer — [#1](https://github.com/mvl-lang/mvl-spec/issues/1)
 - 🔄 Generator scripts (regenerate keyword tables from `keywords.yaml`) — [#2](https://github.com/mvl-lang/mvl-spec/issues/2)
 - ⬜ Ott semantics (types, effects, IFC, contracts, actors) — [#3](https://github.com/mvl-lang/mvl-spec/issues/3)
