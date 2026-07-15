@@ -113,8 +113,17 @@ builtin_types:
   - Map
   - Set
 
-# Security labels — parsed as identifiers but semantically distinguished.
-security_labels:
-  - Public
+# Stdlib IFC labels — ordinary identifiers, NOT reserved words. Pre-seeded
+# into the parser's known-label set so `Tainted[T]` / `Secret[T]` parse as
+# labeled types without needing an explicit `label` declaration. User code
+# can extend the set with `label Foo;` (see `ifc:` above).
+#
+# `Public` is NOT a stdlib label — an unlabeled type is public by default.
+stdlib_labels:
   - Tainted
   - Secret
+  # Capability labels (#931):
+  - ConfigPath
+  - DbUrl
+  - ApiEndpoint
+  - AuditTarget
