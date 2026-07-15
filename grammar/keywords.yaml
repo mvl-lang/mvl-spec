@@ -61,8 +61,8 @@ ownership:
 ifc:
   - label
   - relabel
-  - declassify
-  - sanitize
+  # Note: `declassify` and `sanitize` were removed under #894.
+  # Use `relabel name(expr, "TAG")` with a declared transition instead.
 
 boolean:
   - "true"
