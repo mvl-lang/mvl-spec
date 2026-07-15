@@ -10,6 +10,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). While t
 
 ## [Unreleased]
 
+## [0.1.2] — 2026-07-15
+
+### Fixed
+
+- **`labeled_type` / `security_label` drift** — the EBNF restricted
+  labeled types to a closed set of three names (`"Public" | "Tainted" |
+  "Secret"`). That was wrong on two counts:
+  - `Public` is not a stdlib label and never was — an unlabeled type is
+    public by default.
+  - The set is not closed — the parser pre-seeds six stdlib labels
+    (`Tainted`, `Secret`, `ConfigPath`, `DbUrl`, `ApiEndpoint`,
+    `AuditTarget`) and lets user code add more via `label Foo;`.
+  The rule is now `labeled_type = IDENT "[" type_expr "]"` with a
+  comment explaining the semantic constraint (IDENT must be in the
+  declared-label set).
+- **`keywords.yaml`** — replaced the misnamed `security_labels:` list
+  (which claimed `Public` was a reserved-by-convention label) with a
+  correctly-named `stdlib_labels:` list containing the six labels the
+  parser actually pre-seeds.
+
 ## [0.1.1] — 2026-07-15
 
 ### Fixed
