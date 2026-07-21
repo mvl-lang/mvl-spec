@@ -16,14 +16,17 @@ classifiers = [
 ]
 
 dependencies = [
-    "pygls>=1.3",
+    "pygls>=2.0,<3",
     "tree-sitter>=0.22",
-    # The MVL tree-sitter binding is published separately from
-    # mvl-lang/mvl-spec/tools/tree-sitter as `tree-sitter-mvl` on PyPI.
-    # Add this once that package is published; until then users install
-    # the tree-sitter binding manually from source.
-    # "tree-sitter-mvl>=0.1",
+    # The MVL tree-sitter grammar lives at mvl-lang/tree-sitter-mvl and
+    # is installed by git URL — not from PyPI. See issue #36 for the
+    # rationale (pre-1.0 MVL, grammar co-evolves with the language,
+    # editor extensions pin the same way in editors/zed/extension.toml).
+    "tree-sitter-mvl @ git+https://github.com/mvl-lang/tree-sitter-mvl@994821d4c936a487854ac4ae60b14a0400bdc000",
 ]
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
 
 [project.scripts]
 mvl-lsp = "mvl_lsp.server:main"

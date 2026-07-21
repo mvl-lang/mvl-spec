@@ -31,7 +31,7 @@ import sys
 from pathlib import Path
 
 from lsprotocol import types as lsp
-from pygls.server import LanguageServer
+from pygls.lsp.server import LanguageServer
 
 SERVER_NAME = "mvl-lsp"
 SERVER_VERSION = "0.1.0"

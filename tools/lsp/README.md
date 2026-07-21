@@ -9,17 +9,21 @@ MVL Language Server, Phase 1 — provides syntax-error diagnostics for `.mvl` fi
 
 ## Install
 
+`mvl-lsp` depends on `tree-sitter-mvl`, which is installed by git URL
+(not PyPI — see [#36](https://github.com/mvl-lang/mvl-spec/issues/36)).
+The dependency is declared in `pyproject.toml`, so pip resolves it
+automatically:
+
 ```bash
-pip install mvl-lsp
-# Also install the MVL tree-sitter binding (once published to PyPI):
-pip install tree-sitter-mvl
+pip install git+https://github.com/mvl-lang/mvl-spec#subdirectory=tools/lsp
 ```
 
-Until `tree-sitter-mvl` is on PyPI, install from source:
+For local development on either the LSP or the grammar:
 
 ```bash
+git clone https://github.com/mvl-lang/tree-sitter-mvl
 git clone https://github.com/mvl-lang/mvl-spec
-pip install ./mvl-spec/tools/tree-sitter
+uv pip install -e ./tree-sitter-mvl -e ./mvl-spec/tools/lsp
 ```
 
 ## Run
