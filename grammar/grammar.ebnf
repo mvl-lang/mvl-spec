@@ -165,12 +165,12 @@ ref_atom       = IDENT { "." IDENT }                               (* field acce
                | INTEGER | FLOAT
                | "len" "(" IDENT ")"
                | "old" "(" ref_expr ")"                          (* Phase 4, #627 — entry-time value in ensures *)
-               | forall_expr                                      (* Phase 5, #628 — universal quantifier *)
-               | exists_expr                                      (* Phase 5, #628 — existential quantifier *)
+               | forall_expr                                      (* #1915 — bounded universal quantifier *)
+               | exists_expr                                      (* #1915 — bounded existential quantifier *)
                | "(" ref_expr ")" | "!" ref_atom
                | ref_atom ( "+" | "-" | "*" | "/" | "%" ) ref_atom ;
-forall_expr    = "forall" IDENT ":" type_expr "," ref_expr ; (* Phase 5, #628 *)
-exists_expr    = "exists" IDENT ":" type_expr "," ref_expr ; (* Phase 5, #628 *)
+forall_expr    = "forall" IDENT "in" "[" INTEGER ".." INTEGER "]" "." ref_expr ; (* #1915 — integer bounds only; unbounded `forall x: T,` is rejected by parser *)
+exists_expr    = "exists" IDENT "in" "[" INTEGER ".." INTEGER "]" "." ref_expr ; (* #1915 — integer bounds only; unbounded `exists x: T,` is rejected by parser *)
 
 (* === Statements === *)
 block          = "{" { statement } "}" ;
