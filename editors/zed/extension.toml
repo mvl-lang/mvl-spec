@@ -6,10 +6,11 @@ description = "MVL (Maximum Verifiable Language) — syntax highlighting and edi
 authors = ["MVL Team <https://github.com/mvl-lang>"]
 repository = "https://github.com/mvl-lang/mvl-spec"
 
-# NOTE: Zed requires grammar.js at the root of the grammar repository.
-# The tree-sitter grammar currently lives under tools/tree-sitter/ in the
-# mvl-spec monorepo — a dedicated tree-sitter-mvl repo split is planned when
-# Zed's subpath handling matures. Until then, this pins to a working commit.
+# The tree-sitter grammar lives in its own repository at
+# mvl-lang/tree-sitter-mvl with grammar.js at the root — as Zed's
+# extension system requires. See mvl-lang/mvl-spec cleanup ticket for
+# the follow-up work removing the redundant tools/tree-sitter/ copy
+# from the mvl-spec monorepo.
 [grammars.mvl]
-repository = "https://github.com/mvl-lang/mvl-spec"
-commit = "ecb7111"
+repository = "https://github.com/mvl-lang/tree-sitter-mvl"
+rev = "994821d"
