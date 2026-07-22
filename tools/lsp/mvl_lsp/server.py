@@ -2,15 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 Schuberg Philis
 """
-MVL Language Server — Phase 1 (tree-sitter, no compiler required)
+MVL Language Server — full 11-requirement diagnostics via the mvl compiler.
 
-Provides syntax-error diagnostics for .mvl files using the MVL tree-sitter
-grammar (siblings this package under ../tree-sitter/).  No MVL compiler
-binary needed.
-
-For full type / effect / IFC / refinement / contract diagnostics, see
-the Phase 2 LSP tracked in mvl-lang/mvl-spec#29 (subprocess wrapper
-around `mvl check --format=json`).
+The server shells out to `mvl check --stdin --format=json` on every
+buffer event and maps the compiler's JSON output to LSP Diagnostics.
+Surfaces type, effect, IFC, refinement, contract, termination, and
+ownership errors — everything the compiler catches.
 
 Install:
     pip install mvl-lsp
@@ -18,128 +15,123 @@ Install:
 Run (stdio, for editors):
     mvl-lsp
 
-The `mvl-lsp` console entry point is declared in this package's
-`pyproject.toml` — editors invoke it via stdio per the LSP spec.
-
-Editor extensions that configure `mvl-lsp` as the language server for
-`.mvl` files live in ../../editors/ (Neovim, VS Code, Zed).
+Requires the `mvl` binary on PATH (or MVL_BIN pointing at it). Set
+MVL_BIN to a specific build when iterating on the compiler alongside
+the LSP.
 """
 
 from __future__ import annotations
 
+import json
+import os
+import shutil
+import subprocess
 import sys
-from pathlib import Path
+from urllib.parse import unquote
 
 from lsprotocol import types as lsp
 from pygls.lsp.server import LanguageServer
 
 SERVER_NAME = "mvl-lsp"
-SERVER_VERSION = "0.1.0"
+SERVER_VERSION = "0.2.0"
 
-# ── Tree-sitter parser setup ──────────────────────────────────────────────────
-
-def _load_parser():
-    """
-    Load the MVL tree-sitter parser from the installed tree_sitter_mvl
-    Python binding (built and published from https://github.com/mvl-lang/mvl-spec).
-
-    Returns a configured Parser, or None if tree-sitter is unavailable.
-    """
-    try:
-        from tree_sitter import Language, Parser as TSParser
-    except ImportError:
-        return None
-
-    try:
-        import tree_sitter_mvl as _ts_mvl  # type: ignore[import]
-        lang = Language(_ts_mvl.language())
-        try:
-            return TSParser(lang)          # tree-sitter >= 0.22
-        except TypeError:
-            p = TSParser()
-            p.set_language(lang)           # tree-sitter 0.21
-            return p
-    except (ImportError, AttributeError):
-        return None
+MVL_TIMEOUT_SECONDS = 10
 
 
-_PARSER = _load_parser()
+def _find_mvl_binary() -> str | None:
+    """Locate the mvl compiler. MVL_BIN wins over PATH."""
+    explicit = os.environ.get("MVL_BIN")
+    if explicit:
+        return explicit if os.path.isfile(explicit) and os.access(explicit, os.X_OK) else None
+    return shutil.which("mvl")
 
-if _PARSER is None:
+
+_MVL_BIN = _find_mvl_binary()
+
+if _MVL_BIN is None:
     print(
-        "[mvl-lsp] WARNING: tree-sitter not available — no diagnostics will be reported.\n"
-        "  Install: pip install tree-sitter && \\\n"
-        "           pip install ./vendor/mvl-spec/tools/tree-sitter",
+        "[mvl-lsp] WARNING: `mvl` binary not found — no diagnostics will be reported.\n"
+        "  Install mvl (see https://github.com/mvl-lang/mvl) or set MVL_BIN=/path/to/mvl.",
         file=sys.stderr,
     )
 
-# ── Diagnostic extraction ─────────────────────────────────────────────────────
 
-def _walk(node) -> list[lsp.Diagnostic]:
+def _severity_for(code: str) -> lsp.DiagnosticSeverity:
+    """Map compiler error codes to LSP severities. Warnings use `W`-prefixed codes."""
+    return (
+        lsp.DiagnosticSeverity.Warning
+        if code.startswith("W")
+        else lsp.DiagnosticSeverity.Error
+    )
+
+
+def _diagnostic_from_json(entry: dict, severity: lsp.DiagnosticSeverity) -> lsp.Diagnostic:
+    """Convert one entry from `mvl check --format=json` into an LSP Diagnostic.
+
+    The compiler reports 1-indexed line/column; LSP expects 0-indexed. The
+    compiler doesn't emit an end range, so highlight a single character starting
+    at the reported position.
     """
-    Recursively walk a tree-sitter node, collecting ERROR and MISSING nodes
-    as LSP Diagnostics.
-
-    Tree-sitter is error-tolerant: it continues parsing after errors and inserts
-    ERROR nodes (for unexpected tokens) and MISSING nodes (for absent expected
-    tokens). We surface both as syntax errors.
-    """
-    diagnostics: list[lsp.Diagnostic] = []
-
-    if node.is_missing:
-        # MISSING: a required token was absent at this position.
-        row, col = node.start_point
-        diagnostics.append(lsp.Diagnostic(
-            range=lsp.Range(
-                start=lsp.Position(line=row, character=col),
-                end=lsp.Position(line=row, character=col + 1),
-            ),
-            message=f"missing {node.type}",
-            severity=lsp.DiagnosticSeverity.Error,
-            source=SERVER_NAME,
-            code="EPARSE",
-        ))
-    elif node.type == "ERROR":
-        # ERROR: the parser could not match the token(s) here.
-        start_row, start_col = node.start_point
-        end_row, end_col = node.end_point
-        # Avoid zero-width ranges
-        if start_row == end_row and start_col == end_col:
-            end_col += 1
-        diagnostics.append(lsp.Diagnostic(
-            range=lsp.Range(
-                start=lsp.Position(line=start_row, character=start_col),
-                end=lsp.Position(line=end_row, character=end_col),
-            ),
-            message="syntax error",
-            severity=lsp.DiagnosticSeverity.Error,
-            source=SERVER_NAME,
-            code="EPARSE",
-        ))
-        # Don't recurse into ERROR children — they're part of the same error
-        return diagnostics
-
-    for child in node.children:
-        diagnostics.extend(_walk(child))
-
-    return diagnostics
+    loc = entry.get("location", {})
+    line = max(0, loc.get("line", 1) - 1)
+    col = max(0, loc.get("column", 1) - 1)
+    return lsp.Diagnostic(
+        range=lsp.Range(
+            start=lsp.Position(line=line, character=col),
+            end=lsp.Position(line=line, character=col + 1),
+        ),
+        message=entry.get("message", ""),
+        severity=severity,
+        source=SERVER_NAME,
+        code=entry.get("code", ""),
+    )
 
 
 def _check(source: str) -> list[lsp.Diagnostic]:
-    """Parse `source` with tree-sitter and return syntax-error diagnostics."""
-    if _PARSER is None:
+    """Run the compiler over `source` (via stdin) and return LSP diagnostics."""
+    if _MVL_BIN is None:
         return []
-    tree = _PARSER.parse(source.encode("utf-8"))
-    return _walk(tree.root_node)
+    env = {**os.environ, "MVL_NO_REEXEC": "1"}
+    try:
+        result = subprocess.run(
+            [_MVL_BIN, "check", "--stdin", "--format=json"],
+            input=source,
+            capture_output=True,
+            text=True,
+            env=env,
+            timeout=MVL_TIMEOUT_SECONDS,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired) as e:
+        print(f"[mvl-lsp] mvl check failed: {e}", file=sys.stderr)
+        return []
 
+    try:
+        payload = json.loads(result.stdout)
+    except json.JSONDecodeError:
+        # Non-JSON on stdout means the compiler emitted a parse-level error
+        # before format=json engaged. Surface it as a single generic diagnostic.
+        message = (result.stdout + result.stderr).strip() or "mvl check produced no output"
+        return [lsp.Diagnostic(
+            range=lsp.Range(start=lsp.Position(line=0, character=0),
+                            end=lsp.Position(line=0, character=1)),
+            message=message.splitlines()[0][:200],
+            severity=lsp.DiagnosticSeverity.Error,
+            source=SERVER_NAME,
+            code="EPARSE",
+        )]
 
-# ── LSP server ────────────────────────────────────────────────────────────────
+    diagnostics: list[lsp.Diagnostic] = []
+    for e in payload.get("errors", []):
+        diagnostics.append(_diagnostic_from_json(e, _severity_for(e.get("code", ""))))
+    for w in payload.get("warnings", []):
+        diagnostics.append(_diagnostic_from_json(w, lsp.DiagnosticSeverity.Warning))
+    return diagnostics
+
 
 server = LanguageServer(SERVER_NAME, SERVER_VERSION)
 
 
 def _uri_to_path(uri: str) -> str:
-    from urllib.parse import unquote
     return unquote(uri[7:]) if uri.startswith("file://") else uri
 
 
@@ -157,7 +149,6 @@ def did_open(ls: LanguageServer, params: lsp.DidOpenTextDocumentParams) -> None:
 def did_change(ls: LanguageServer, params: lsp.DidChangeTextDocumentParams) -> None:
     if not params.content_changes:
         return
-    # Full sync: last event has the complete current buffer
     last = params.content_changes[-1]
     text = last.text if hasattr(last, "text") else ""
     if text:
@@ -168,7 +159,8 @@ def did_change(ls: LanguageServer, params: lsp.DidChangeTextDocumentParams) -> N
 def did_save(ls: LanguageServer, params: lsp.DidSaveTextDocumentParams) -> None:
     path = _uri_to_path(params.text_document.uri)
     try:
-        source = Path(path).read_text(encoding="utf-8")
+        with open(path, encoding="utf-8") as f:
+            source = f.read()
     except OSError:
         return
     _publish(ls, params.text_document.uri, _check(source))
@@ -179,18 +171,15 @@ def did_close(ls: LanguageServer, params: lsp.DidCloseTextDocumentParams) -> Non
     _publish(ls, params.text_document.uri, [])
 
 
-# ── Entry point ───────────────────────────────────────────────────────────────
-
-
 def main() -> None:
     """Console-script entry point (see pyproject.toml `[project.scripts]`).
 
-    Runs the LSP server over stdio.  Editors spawn this process and speak
+    Runs the LSP server over stdio. Editors spawn this process and speak
     LSP over its stdin/stdout per the protocol.
     """
     print(f"Starting {SERVER_NAME} v{SERVER_VERSION}", file=sys.stderr)
     print(
-        f"tree-sitter: {'available' if _PARSER else 'NOT available — no diagnostics'}",
+        f"mvl binary: {_MVL_BIN or 'NOT FOUND — no diagnostics will be reported'}",
         file=sys.stderr,
     )
     server.start_io()

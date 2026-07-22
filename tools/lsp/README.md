@@ -1,29 +1,29 @@
 # mvl-lsp
 
-MVL Language Server, Phase 1 — provides syntax-error diagnostics for `.mvl` files using the [MVL tree-sitter grammar](../tree-sitter/). No MVL compiler binary required.
+MVL Language Server — full compiler-backed diagnostics for `.mvl` files. Shells out to `mvl check --stdin --format=json` and maps the result to LSP diagnostics.
 
-**Version:** 0.1.0
+**Version:** 0.2.0
 **Tracks:** mvl-spec ≥ 0.1.0
-**Depends on:** [`tree-sitter-mvl`](../tree-sitter/) (Python binding)
+**Depends on:** the `mvl` compiler binary on PATH (or `MVL_BIN`)
 **Changelog:** [`CHANGELOG.md`](CHANGELOG.md)
 
 ## Install
-
-`mvl-lsp` depends on `tree-sitter-mvl`, which is installed by git URL
-(not PyPI — see [#36](https://github.com/mvl-lang/mvl-spec/issues/36)).
-The dependency is declared in `pyproject.toml`, so pip resolves it
-automatically:
 
 ```bash
 pip install git+https://github.com/mvl-lang/mvl-spec#subdirectory=tools/lsp
 ```
 
-For local development on either the LSP or the grammar:
+For local development:
 
 ```bash
-git clone https://github.com/mvl-lang/tree-sitter-mvl
 git clone https://github.com/mvl-lang/mvl-spec
-uv pip install -e ./tree-sitter-mvl -e ./mvl-spec/tools/lsp
+uv pip install -e ./mvl-spec/tools/lsp
+```
+
+You also need the `mvl` compiler installed. Either put it on `PATH` (default) or point `MVL_BIN` at a specific build (useful when iterating on the compiler alongside the LSP):
+
+```bash
+export MVL_BIN=/path/to/mvl-lang/mvl/target/debug/mvl
 ```
 
 ## Run
@@ -34,24 +34,22 @@ The server is invoked over stdio per the LSP spec:
 mvl-lsp
 ```
 
-Editors don't run this by hand — they spawn `mvl-lsp` and speak LSP over its stdio. The editor extensions in [`../../editors/`](../../editors/) do this configuration automatically.
+Editors don't run this by hand — they spawn `mvl-lsp` and speak LSP over its stdio. The editor extensions in [`../../editors/`](../../editors/) do this configuration automatically. For local dev see [`Makefile`](Makefile): `make run` sends an initialize handshake and prints the response.
 
-## What Phase 1 covers
+## What it covers
 
-- **Syntax errors** — tree-sitter parse failures surface as LSP diagnostics with line/column ranges
-- **Nothing else** — no type checking, no effect inference, no IFC label validation, no refinement discharge
+Everything `mvl check` catches: syntax errors, type mismatches, effect violations, IFC label errors, refinement failures, contract violations, termination checks, ownership errors — the compiler's full 11-requirement diagnostic surface, no gaps between LSP and CLI.
 
-## What Phase 2 will cover ([#29](https://github.com/mvl-lang/mvl-spec/issues/29))
+Each LSP diagnostic carries the compiler's error code (`E0001`, etc.) and points at the exact line/column the compiler reported.
 
-- Full 11-requirement diagnostics by shelling out to `mvl check --format=json`
-- Type errors, effect violations, IFC label errors, refinement failures, contract violations
-- Same LSP surface — the Phase 2 server is a superset, editors configure the same way
+## Behavior
 
-Phase 1 is fast (~ms per edit) and requires no compiler. Phase 2 trades speed for completeness.
+- **On open / change / save:** run `mvl check --stdin --format=json` with the current buffer.
+- **On close:** clear diagnostics for that URI.
+- **Timeout:** each check is capped at 10s (files that exceed it are probably not `.mvl` you want the LSP interpreting).
+- **Env passed to child:** inherits the parent's env with `MVL_NO_REEXEC=1` added, so the LSP always runs the binary it was pointed at rather than being redirected by `requires-mvl`.
 
 ## Editor integration
-
-Snippets for common editors:
 
 **Neovim** (nvim-lspconfig):
 ```lua
@@ -66,17 +64,21 @@ require('lspconfig').mvl.setup({
 
 **Zed**: the [`zed-mvl`](../../editors/zed/) extension in this repo configures the LSP.
 
-## Publishing
-
-Per the [versioning policy](../../README.md#versioning-and-publishing) in this repo:
-
-- Tag prefix: `lsp-v*` (e.g., `lsp-v0.1.0`)
-- Registry: [PyPI as `mvl-lsp`](https://pypi.org/project/mvl-lsp/) *(when first published)*
-- Publish workflow: `.github/workflows/publish-lsp.yml` (to be added)
+**opencode**: add to `~/.config/opencode/opencode.jsonc`:
+```json
+{
+  "lsp": {
+    "mvl": {
+      "command": ["/absolute/path/to/mvl-lsp"],
+      "extensions": [".mvl"]
+    }
+  }
+}
+```
 
 ## Origin
 
-Migrated from `mvl-lang/mvl/tools/lsp_server.py` under [#28](https://github.com/mvl-lang/mvl-spec/issues/28). See the ticket for the rationale (spec-consuming tool with zero compiler coupling belongs alongside tree-sitter, pygments, editor extensions).
+Migrated from `mvl-lang/mvl/tools/lsp_server.py` under [#28](https://github.com/mvl-lang/mvl-spec/issues/28). Original design was a two-phase rollout (tree-sitter parse errors first, compiler-backed diagnostics later — [#29](https://github.com/mvl-lang/mvl-spec/issues/29)); since `mvl check --stdin --format=json` already exists, the phase-1 tree-sitter path was skipped and the server ships with full compiler-backed diagnostics from the start.
 
 ## License
 

@@ -1,7 +1,7 @@
 [project]
 name = "mvl-lsp"
-version = "0.1.0"
-description = "MVL Language Server — Phase 1 (tree-sitter diagnostics)"
+version = "0.2.0"
+description = "MVL Language Server — compiler-backed diagnostics via `mvl check --stdin --format=json`"
 readme = "README.md"
 license = { text = "Apache-2.0" }
 authors = [{ name = "MVL Team", email = "mvl-lang@schubergphilis.com" }]
@@ -17,13 +17,10 @@ classifiers = [
 
 dependencies = [
     "pygls>=2.0,<3",
-    "tree-sitter>=0.22",
-    # The MVL tree-sitter grammar lives at mvl-lang/tree-sitter-mvl and
-    # is installed by git URL — not from PyPI. See issue #36 for the
-    # rationale (pre-1.0 MVL, grammar co-evolves with the language,
-    # editor extensions pin the same way in editors/zed/extension.toml).
-    "tree-sitter-mvl @ git+https://github.com/mvl-lang/tree-sitter-mvl@994821d4c936a487854ac4ae60b14a0400bdc000",
 ]
+# Runtime requirement: the `mvl` compiler binary must be on PATH, or
+# MVL_BIN must point at it. `mvl-lsp` shells out to
+# `mvl check --stdin --format=json` for every diagnostic pass.
 
 [project.optional-dependencies]
 test = ["pytest>=7"]
