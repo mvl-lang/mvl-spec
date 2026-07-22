@@ -45,10 +45,13 @@ mvl-spec/
 
 ## Versioning discipline
 
-The spec's `VERSION` file is the coordination point. **All editor
-extensions, all LSP releases, and the tree-sitter grammar track the
-spec version** rather than each having an independent cadence — this
-was decided 2026-07-22 after we caught a 4-way version drift.
+The spec's `VERSION` file is the coordination point. Artifacts each
+carry their own version, but **at release checkpoints they are aligned
+to the spec version**. Between releases they may drift as feature work
+advances independently (e.g. the LSP was legitimately at `0.2.0`
+during compiler-backed diagnostics work); the drift is reconciled
+before the next release. This was formalised 2026-07-22 after we
+caught a 4-way version drift.
 
 To check drift or align versions, run:
 

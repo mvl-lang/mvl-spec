@@ -2,7 +2,7 @@
 
 **Formal specification of the MVL (Maximum Verifiable Language) programming language.**
 
-**Version:** [0.1.0](VERSION) — see [CHANGELOG.md](CHANGELOG.md)
+**Version:** [0.1.2](VERSION) — see [CHANGELOG.md](CHANGELOG.md)
 **License:** Apache-2.0
 
 This repository is the source of truth for what MVL *is*, independent of any particular implementation of it. The compiler in [`mvl-lang/mvl`](https://github.com/mvl-lang/mvl) implements this specification; other tooling consumes it.
@@ -70,19 +70,35 @@ This discipline is the primary reason these artifacts live together in one repo 
 
 ## Versioning and publishing
 
-Everything shippable is versioned independently. The spec itself has one version (`VERSION` at the repo root); each tool has its own version (in its manifest) and its own `CHANGELOG.md`.
+The spec's `VERSION` file (currently `0.1.2`) is the coordination point. Artifacts (editor extensions, LSP, tree-sitter grammar) each carry their own version, but **at release checkpoints they are aligned to the spec version**. Between releases they may drift as feature work advances independently — the drift is caught and reconciled before the next release.
+
+Run the version checker to see the current state:
+
+```bash
+python3 tools/check-versions.py                        # report drift
+python3 tools/check-versions.py --fix                  # align local files to VERSION
+python3 tools/check-versions.py --target 0.1.3         # override target
+python3 tools/check-versions.py --tree-sitter-dir PATH # explicit grammar checkout
+python3 tools/check-versions.py --skip-tree-sitter     # skip external repo
+```
+
+The script is stdlib-only (Python 3.11+), no venv needed. It auto-locates the external tree-sitter grammar in this order: `--tree-sitter-dir` → `$MVL_TREE_SITTER_DIR` → `../tree-sitter-mvl/` → read-only fetch from `raw.githubusercontent.com/mvl-lang/tree-sitter-mvl/main/`. Remote mode cannot `--fix`; clone locally to touch the grammar repo.
+
+CHANGELOG headers are checked read-only — the top `## [X.Y.Z]` must be either the target version or `## [Unreleased]`; `--fix` does not touch release notes.
 
 ### Tag manifest
 
-| Artifact | Current | Tag prefix | Registry | Directory |
-|----------|---------|-----------|----------|-----------|
-| Full spec release | `0.1.0` | `spec-v*` | GitHub Releases (Zenodo DOI planned) | *(repo root)* |
-| tree-sitter grammar | `0.1.0` | `tree-sitter-v*` | npm as `tree-sitter-mvl` | `tools/tree-sitter/` |
+| Artifact | Current | Tag prefix | Registry | Location |
+|----------|---------|-----------|----------|----------|
+| Full spec release | `0.1.2` | `spec-v*` | GitHub Releases (Zenodo DOI planned) | *(repo root)* |
+| tree-sitter grammar | `0.1.2` | `v*` (own repo) | npm as `tree-sitter-mvl` | [`mvl-lang/tree-sitter-mvl`](https://github.com/mvl-lang/tree-sitter-mvl) (external) |
 | Pygments lexer | *(pending #1)* | `pygments-v*` | PyPI as `pygments-mvl` | `tools/pygments/` |
-| Language server (Phase 1) | `0.1.0` | `lsp-v*` | PyPI as `mvl-lsp` | `tools/lsp/` |
-| VS Code extension | `0.1.0` | `vscode-v*` | VS Code Marketplace + Open VSX | `editors/vscode/` |
-| Zed extension | `0.1.0` | `zed-v*` | Zed Extensions | `editors/zed/` |
-| Neovim plugin | `0.1.0` | `nvim-v*` | git only (users install by URL) | `editors/nvim/` |
+| Language server | `0.1.2` | `lsp-v*` | PyPI as `mvl-lsp` | `tools/lsp/` |
+| VS Code extension | `0.1.2` | `vscode-v*` | VS Code Marketplace + Open VSX | `editors/vscode/` |
+| Zed extension | `0.1.2` | `zed-v*` | Zed Extensions | `editors/zed/` |
+| Neovim plugin | `0.1.2` | `nvim-v*` | git only (users install by URL) | `editors/nvim/` |
+
+The tree-sitter grammar lives in [its own repo](https://github.com/mvl-lang/tree-sitter-mvl) because Zed's extension resolver requires `grammar.js` at a repository root. The `tools/tree-sitter/` subdirectory here is a legacy partial copy slated for removal — see [#34](https://github.com/mvl-lang/mvl-spec/issues/34).
 
 CI workflows in `.github/workflows/publish-*.yml` watch each tag prefix and publish from the matching subdirectory. Actual publish steps are currently gated behind `if: false` — the workflows validate, build, and release to GitHub, but do not push to external registries until publishing credentials are configured.
 
@@ -95,17 +111,9 @@ Because everything is pre-1.0, MINOR bumps mark the breakpoint:
 
 At 1.0 we shift to real semver. Documented in [CHANGELOG.md](CHANGELOG.md).
 
-### Compatibility declarations
+### LLM-assisted development
 
-Each tool declares which spec range it supports, in its README and CHANGELOG:
-
-```
-tree-sitter-mvl 0.1.0   tracks mvl-spec >= 0.1, < 0.5
-pygments-mvl    0.1.0   tracks mvl-spec >= 0.1
-zed-mvl         0.1.0   tracks mvl-spec >= 0.1, depends on tree-sitter-mvl >= 0.1
-```
-
-This lets tooling ship bug fixes without forcing a full spec revision, and lets the spec evolve without immediately breaking every downstream user. The range narrows when the spec introduces a real breaking change; until then the upper bound floats to signal "we haven't tested against a version this new yet."
+See [`CLAUDE.md`](CLAUDE.md) for repo conventions, common pitfalls, and the MVL taxonomy notes that coding assistants need to work here without repeating mistakes.
 
 ---
 
