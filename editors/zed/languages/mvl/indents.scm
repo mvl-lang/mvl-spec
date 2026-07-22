@@ -7,9 +7,6 @@
 (struct_body "{" @start "}" @end) @indent
 (enum_body "{" @start "}" @end) @indent
 
-; Indent inside module declarations
-(module_decl "{" @start "}" @end) @indent
-
 ; Indent inside parenthesised parameter lists (multi-line function signatures)
 (fn_decl "(" @start ")" @end) @indent
 (param_list) @indent
