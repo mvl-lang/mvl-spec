@@ -230,7 +230,8 @@ method_call    = expr "." IDENT "(" [ arg_list ] ")" ;
 field_access   = expr "." IDENT ;
 arg_list       = expr { "," expr } ;
 lambda         = "|" [ param_list ] "|" [ "->" type_expr ] expr ;
-construct      = IDENT "{" { IDENT ":" expr "," } "}" ;
+construct      = IDENT "{" [ field_init { "," field_init } [ "," ] ] "}" ;
+field_init     = IDENT ":" expr ;
 if_expr        = "if" expr block "else" block
                | "if" "let" pattern "=" expr block "else" block ;  (* desugars to match; see #891 *)
 match_expr     = "match" expr "{" { match_arm } "}" ;
@@ -245,12 +246,13 @@ block_expr     = block ;
 pattern        = base_pattern { "|" base_pattern } ;
 base_pattern   = "_" | IDENT | literal
                | ctor_path "(" [ pattern_list ] ")"
-               | ctor_path "{" { IDENT ":" base_pattern "," } [ ".." ] "}"
+               | ctor_path "{" [ field_pattern { "," field_pattern } [ "," ] ] [ ".." ] "}"
                | ctor_path                                       (* bare variant, no payload *)
                | "(" pattern "," pattern_list ")"
                | "Some" "(" pattern ")" | "None"
                | "Ok" "(" pattern ")" | "Err" "(" pattern ")" ;
 ctor_path      = IDENT [ "::" IDENT ] ;
+field_pattern  = IDENT ":" base_pattern ;
 pattern_list   = pattern { "," pattern } ;
 
 (* === Literals === *)

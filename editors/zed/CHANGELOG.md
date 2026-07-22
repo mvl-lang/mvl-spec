@@ -2,6 +2,21 @@
 
 ## [Unreleased]
 
+## [0.1.3] — 2026-07-22
+
+### Fixed
+
+- Grammar `rev` pin bumped to pick up the tree-sitter-mvl `0.1.3`
+  parser (qualified constructor patterns, method-call precedence,
+  optional trailing commas).
+
+### Changed
+
+- Documentation now points at
+  [`mvl-lang/tree-sitter-mvl`](https://github.com/mvl-lang/tree-sitter-mvl)
+  as the single home of the grammar; the legacy
+  `mvl-spec/tools/tree-sitter/` copy has been deleted.
+
 ## [0.1.0] — 2026-07-13
 
 Initial release under the mvl-spec repo. Migrated from `mvl-lang/mvl/etc/zed-mvl/` (was `0.0.1` there).

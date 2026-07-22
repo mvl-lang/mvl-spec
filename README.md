@@ -2,7 +2,7 @@
 
 **Formal specification of the MVL (Maximum Verifiable Language) programming language.**
 
-**Version:** [0.1.2](VERSION) — see [CHANGELOG.md](CHANGELOG.md)
+**Version:** [0.1.3](VERSION) — see [CHANGELOG.md](CHANGELOG.md)
 **License:** Apache-2.0
 
 This repository is the source of truth for what MVL *is*, independent of any particular implementation of it. The compiler in [`mvl-lang/mvl`](https://github.com/mvl-lang/mvl) implements this specification; other tooling consumes it.
@@ -58,7 +58,7 @@ mvl-spec/
 
 `grammar/keywords.yaml` is the canonical list of MVL reserved keywords. Every consumer generates its keyword table from this file:
 
-- `tools/tree-sitter/grammar.js` — via `tools/generators/gen_tree_sitter.js`
+- [`mvl-lang/tree-sitter-mvl`](https://github.com/mvl-lang/tree-sitter-mvl) `grammar.js` — via `tools/generators/gen_tree_sitter.js`
 - `tools/pygments/mvl_pygments/lexer.py` — via `tools/generators/gen_pygments.py`
 - `editors/vscode/syntaxes/*.json` — via `tools/generators/gen_vscode.js`
 
@@ -70,7 +70,7 @@ This discipline is the primary reason these artifacts live together in one repo 
 
 ## Versioning and publishing
 
-The spec's `VERSION` file (currently `0.1.2`) is the coordination point. Artifacts (editor extensions, LSP, tree-sitter grammar) each carry their own version, but **at release checkpoints they are aligned to the spec version**. Between releases they may drift as feature work advances independently — the drift is caught and reconciled before the next release.
+The spec's `VERSION` file (currently `0.1.3`) is the coordination point. Artifacts (editor extensions, LSP, tree-sitter grammar) each carry their own version, but **at release checkpoints they are aligned to the spec version**. Between releases they may drift as feature work advances independently — the drift is caught and reconciled before the next release.
 
 Run the version checker to see the current state:
 
@@ -90,15 +90,15 @@ CHANGELOG headers are checked read-only — the top `## [X.Y.Z]` must be either 
 
 | Artifact | Current | Tag prefix | Registry | Location |
 |----------|---------|-----------|----------|----------|
-| Full spec release | `0.1.2` | `spec-v*` | GitHub Releases (Zenodo DOI planned) | *(repo root)* |
-| tree-sitter grammar | `0.1.2` | `v*` (own repo) | npm as `tree-sitter-mvl` | [`mvl-lang/tree-sitter-mvl`](https://github.com/mvl-lang/tree-sitter-mvl) (external) |
+| Full spec release | `0.1.3` | `spec-v*` | GitHub Releases (Zenodo DOI planned) | *(repo root)* |
+| tree-sitter grammar | `0.1.3` | `v*` (own repo) | npm as `tree-sitter-mvl` | [`mvl-lang/tree-sitter-mvl`](https://github.com/mvl-lang/tree-sitter-mvl) (external) |
 | Pygments lexer | *(pending #1)* | `pygments-v*` | PyPI as `pygments-mvl` | `tools/pygments/` |
-| Language server | `0.1.2` | `lsp-v*` | PyPI as `mvl-lsp` | `tools/lsp/` |
-| VS Code extension | `0.1.2` | `vscode-v*` | VS Code Marketplace + Open VSX | `editors/vscode/` |
-| Zed extension | `0.1.2` | `zed-v*` | Zed Extensions | `editors/zed/` |
-| Neovim plugin | `0.1.2` | `nvim-v*` | git only (users install by URL) | `editors/nvim/` |
+| Language server | `0.1.3` | `lsp-v*` | PyPI as `mvl-lsp` | `tools/lsp/` |
+| VS Code extension | `0.1.3` | `vscode-v*` | VS Code Marketplace + Open VSX | `editors/vscode/` |
+| Zed extension | `0.1.3` | `zed-v*` | Zed Extensions | `editors/zed/` |
+| Neovim plugin | `0.1.3` | `nvim-v*` | git only (users install by URL) | `editors/nvim/` |
 
-The tree-sitter grammar lives in [its own repo](https://github.com/mvl-lang/tree-sitter-mvl) because Zed's extension resolver requires `grammar.js` at a repository root. The `tools/tree-sitter/` subdirectory here is a legacy partial copy slated for removal — see [#34](https://github.com/mvl-lang/mvl-spec/issues/34).
+The tree-sitter grammar lives in [its own repo](https://github.com/mvl-lang/tree-sitter-mvl) because Zed's extension resolver requires `grammar.js` at a repository root.
 
 CI workflows in `.github/workflows/publish-*.yml` watch each tag prefix and publish from the matching subdirectory. Actual publish steps are currently gated behind `if: false` — the workflows validate, build, and release to GitHub, but do not push to external registries until publishing credentials are configured.
 

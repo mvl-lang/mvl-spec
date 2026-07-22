@@ -5,9 +5,9 @@
 # generate their keyword tables from this file.
 #
 # Consumers:
-#   - tools/tree-sitter/grammar.js   (via tools/generators/gen_tree_sitter.js)
-#   - tools/pygments/mvl_pygments/   (via tools/generators/gen_pygments.py)
-#   - editors/vscode/syntaxes/       (via tools/generators/gen_vscode.js)
+#   - mvl-lang/tree-sitter-mvl grammar.js (via tools/generators/gen_tree_sitter.js)
+#   - tools/pygments/mvl_pygments/        (via tools/generators/gen_pygments.py)
+#   - editors/vscode/syntaxes/            (via tools/generators/gen_vscode.js)
 #   - The MVL compiler (mvl/src/mvl/parser/lexer.rs) — currently hand-maintained,
 #     to be regenerated from this file as a future consistency-check target.
 #

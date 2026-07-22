@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.1.3] — 2026-07-22
+
+Version aligned to mvl-spec `0.1.3`.  No functional changes to the
+TextMate grammar (VS Code does not consume the tree-sitter grammar
+that changed in this release).
+
 ## [0.1.0] — 2026-07-13
 
 Initial release. Migrated from `mvl-lang/mvl/etc/vscode-mvl/`.

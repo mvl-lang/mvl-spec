@@ -31,8 +31,7 @@ mvl-spec/
 - **`mvl-lang/tree-sitter-mvl`** — the canonical tree-sitter grammar,
   split out because Zed's extension resolver requires `grammar.js` at
   a repo root. When working on the grammar, `queries/*.scm`, corpus
-  tests, or bindings, edit that repo (or its checkout). Do NOT edit
-  the copy under `tools/tree-sitter/` — it's slated for removal.
+  tests, or bindings, edit that repo (or its checkout).
 
   When Zed's extension pins a grammar revision, it goes in
   `editors/zed/extension.toml` as a **full 40-char SHA**. Short SHAs
@@ -111,9 +110,6 @@ are human-authored — `--fix` does not touch them.
   Regenerate the reference from `src/node-types.json`, don't guess.
 - **Version drift between artifacts** → run
   `python3 tools/check-versions.py` before committing a release.
-- **`tools/tree-sitter/` edits** → don't. That directory is a legacy
-  partial copy. Edit `mvl-lang/tree-sitter-mvl` (external repo)
-  instead.
 
 ## LLM etiquette in this repo
 

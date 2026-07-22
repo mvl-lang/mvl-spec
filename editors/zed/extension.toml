@@ -1,6 +1,6 @@
 id = "mvl"
 name = "MVL"
-version = "0.1.2"
+version = "0.1.3"
 schema_version = 1
 description = "MVL (Maximum Verifiable Language) — syntax highlighting and editor support"
 authors = ["MVL Team <https://github.com/mvl-lang>"]
@@ -8,9 +8,7 @@ repository = "https://github.com/mvl-lang/mvl-spec"
 
 # The tree-sitter grammar lives in its own repository at
 # mvl-lang/tree-sitter-mvl with grammar.js at the root — as Zed's
-# extension system requires. See mvl-lang/mvl-spec cleanup ticket for
-# the follow-up work removing the redundant tools/tree-sitter/ copy
-# from the mvl-spec monorepo.
+# extension system requires.
 [grammars.mvl]
 repository = "https://github.com/mvl-lang/tree-sitter-mvl"
-rev = "994821d4c936a487854ac4ae60b14a0400bdc000"
+rev = "0d5acfea25f007d227f78f6013a03d3418900c7f"

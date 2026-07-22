@@ -41,15 +41,13 @@ The extension is now active and will remain active across Zed restarts. To unins
 
 ### Option B — Install from the Zed Extension Registry
 
-> **Not yet available.** Publishing to the [Zed Extensions](https://github.com/zed-industries/extensions) registry requires the tree-sitter grammar to be available at the root of a dedicated public repo. Until we split `tools/tree-sitter/` out of `mvl-spec` (or Zed adds subpath support), only the dev install (Option A) works.
+> **Not yet published.** The tree-sitter grammar now lives in its own repo ([mvl-lang/tree-sitter-mvl](https://github.com/mvl-lang/tree-sitter-mvl)) — the layout Zed's extension registry requires — but the extension itself has not been submitted yet. Only the dev install (Option A) works today.
 
 Once available, install via:
 
 1. `Cmd+Shift+P` → **`zed: extensions`**
 2. Search for **MVL**
 3. Click **Install**
-
-Track the split in [mvl-spec#7](https://github.com/mvl-lang/mvl-spec/issues) *(to be filed if you want the registry install)*.
 
 ---
 
@@ -97,9 +95,9 @@ Zed fetches and compiles the tree-sitter grammar the first time you open an MVL 
 
 **"Grammar failed to compile."**
 
-The `extension.toml` points to a specific commit in `mvl-lang/mvl-spec` for the grammar source. If Zed cannot fetch that commit (network issue, or repo permissions), the extension will install but highlighting won't work.
+The `extension.toml` points to a specific commit in `mvl-lang/tree-sitter-mvl` for the grammar source. If Zed cannot fetch that commit (network issue, or repo permissions), the extension will install but highlighting won't work.
 
-Workaround: pull the latest `main` of `mvl-spec` and update the `commit` field in `extension.toml` to the current HEAD, then reinstall the dev extension.
+Workaround: pull the latest `main` of `tree-sitter-mvl` and update the `rev` field in `extension.toml` to the current HEAD, then reinstall the dev extension.
 
 **"`zed: install dev extension` doesn't appear in the command palette."**
 
@@ -125,14 +123,12 @@ editors/zed/
 
 ## Grammar sourcing
 
-Zed fetches and compiles the tree-sitter grammar from a Git repository. The grammar source currently lives at `tools/tree-sitter/` in this same repo (`mvl-spec`). `extension.toml` pins a specific commit; bump the pin when the grammar advances.
-
-For the Zed Extension Registry, `grammar.js` must be at the root of a dedicated repo — we'll split `tools/tree-sitter/` out when we're ready to publish there.
+Zed fetches and compiles the tree-sitter grammar from [mvl-lang/tree-sitter-mvl](https://github.com/mvl-lang/tree-sitter-mvl). `extension.toml` pins a specific 40-char commit SHA in that repo; bump the pin when the grammar advances.
 
 ---
 
 ## Related
 
-- [tools/tree-sitter/](../../tools/tree-sitter/) — the grammar source this extension consumes
+- [mvl-lang/tree-sitter-mvl](https://github.com/mvl-lang/tree-sitter-mvl) — the grammar source this extension consumes
 - [editors/nvim/](../nvim/) — Neovim plugin (same tree-sitter grammar, different editor)
 - [editors/vscode/](../vscode/) — VS Code extension (uses a TextMate grammar, not tree-sitter)
