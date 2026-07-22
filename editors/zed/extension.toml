@@ -11,4 +11,4 @@ repository = "https://github.com/mvl-lang/mvl-spec"
 # extension system requires.
 [grammars.mvl]
 repository = "https://github.com/mvl-lang/tree-sitter-mvl"
-rev = "0d5acfea25f007d227f78f6013a03d3418900c7f"
+rev = "dd51a5fc2eac07f6eaa6b0f336489835a4dae3ba"

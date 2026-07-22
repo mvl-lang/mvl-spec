@@ -17,9 +17,15 @@
   "const"
   "struct"
   "enum"
+  "actor"
+  "effect"
+  "label"
+  "relabel"
   "impl"
   "extern"
+  "test"
   "builtin"
+  "end"
 ] @keyword
 
 [
@@ -61,13 +67,28 @@
 
 [
   "consume"
+  "as"
 ] @keyword.operator
+
+[
+  "select"
+  "concurrently"
+  "timeout"
+] @keyword.control
+
+[
+  "requires"
+  "ensures"
+  "invariant"
+  "decreases"
+  "forall"
+  "exists"
+  "old"
+  "with"
+] @keyword.modifier
 
 (declassify_expr "declassify" @keyword.special)
 (sanitize_expr "sanitize" @keyword.special)
-
-"with" @keyword
-"invariant" @keyword
 
 ; ============================================================
 ; Capability annotations (ownership/isolation)
@@ -177,6 +198,12 @@
 
 (fn_call_expr
   function: (identifier) @function.call)
+
+; Method calls — `x.method(...)`.  The grammar inlines this into `expr`
+; with a `method:` field; anchor on that field so we don't confuse the
+; method-call form with plain field access (`x.field`).
+(expr
+  method: (identifier) @function.method)
 
 ; ============================================================
 ; Struct construction
