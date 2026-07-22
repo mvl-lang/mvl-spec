@@ -47,8 +47,38 @@ require("mvl").setup()
 ENDLUA
 echo "    wired XDG install path into $INIT_LUA"
 
-# ── 4. Compile and install MVL parser from source ────────────────────────────
-GRAMMAR_DIR="$(cd "$SCRIPT_DIR/../tree-sitter-mvl" && pwd)"
+# ── 4. Locate tree-sitter-mvl (env override → sibling search → clone) ────────
+TREE_SITTER_MVL_URL="https://github.com/mvl-lang/tree-sitter-mvl.git"
+GRAMMAR_CACHE_DIR="$NVIM_DATA/mvl/tree-sitter-mvl"
+
+if [[ -n "${MVL_TREE_SITTER_DIR:-}" ]]; then
+  GRAMMAR_DIR="$(cd "$MVL_TREE_SITTER_DIR" && pwd)"
+  echo "==> Using tree-sitter-mvl from MVL_TREE_SITTER_DIR: $GRAMMAR_DIR"
+else
+  GRAMMAR_DIR=""
+  search_dir="$SCRIPT_DIR"
+  while [[ "$search_dir" != "/" ]]; do
+    search_dir="$(dirname "$search_dir")"
+    candidate="$search_dir/tree-sitter-mvl"
+    if [[ -f "$candidate/src/parser.c" ]]; then
+      GRAMMAR_DIR="$candidate"
+      echo "==> Found tree-sitter-mvl at $GRAMMAR_DIR"
+      break
+    fi
+  done
+
+  if [[ -z "$GRAMMAR_DIR" ]]; then
+    echo "==> tree-sitter-mvl not found locally, cloning into $GRAMMAR_CACHE_DIR ..."
+    if [[ -d "$GRAMMAR_CACHE_DIR/.git" ]]; then
+      git -C "$GRAMMAR_CACHE_DIR" pull --ff-only
+    else
+      git clone --depth 1 "$TREE_SITTER_MVL_URL" "$GRAMMAR_CACHE_DIR"
+    fi
+    GRAMMAR_DIR="$GRAMMAR_CACHE_DIR"
+  fi
+fi
+
+# ── 5. Compile and install MVL parser from source ────────────────────────────
 PARSER_C="$GRAMMAR_DIR/src/parser.c"
 PARSER_OUT="$GRAMMAR_DIR/mvl.so"
 PARSER_DST_DIRS=(
