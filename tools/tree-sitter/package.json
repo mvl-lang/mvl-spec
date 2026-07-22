@@ -1,6 +1,6 @@
 {
   "name": "tree-sitter-mvl",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Tree-sitter grammar for MVL (Minimum Verification Language)",
   "main": "bindings/node",
   "types": "bindings/node",

@@ -1,6 +1,6 @@
 [project]
 name = "mvl-lsp"
-version = "0.2.0"
+version = "0.1.2"
 description = "MVL Language Server — compiler-backed diagnostics via `mvl check --stdin --format=json`"
 readme = "README.md"
 license = { text = "Apache-2.0" }
