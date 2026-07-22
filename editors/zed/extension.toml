@@ -13,4 +13,4 @@ repository = "https://github.com/mvl-lang/mvl-spec"
 # from the mvl-spec monorepo.
 [grammars.mvl]
 repository = "https://github.com/mvl-lang/tree-sitter-mvl"
-rev = "994821d"
+rev = "994821d4c936a487854ac4ae60b14a0400bdc000"
