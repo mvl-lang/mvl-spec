@@ -9,8 +9,10 @@
 (*   (* comment *)           EBNF comment                                        *)
 (*                                                                               *)
 (* The grammar is LL(1) — see ADR-0005.                                          *)
-(* The tree-sitter grammar (etc/tree-sitter-mvl/grammar.js) is hand-translated  *)
-(* from this file.  Run `make test-grammar-coverage` to verify coverage.         *)
+(* The tree-sitter grammar lives in its own repository (mvl-lang/tree-sitter-mvl,*)
+(* grammar.js at the root, per Zed's extension requirements) and is hand-        *)
+(* translated from this file.  Run `make test-grammar-coverage` to verify        *)
+(* coverage.                                                                     *)
 
 (* === Top-level === *)
 (* "pub" is factored out so each decl_body alternative starts with a     *)
@@ -235,13 +237,20 @@ match_expr     = "match" expr "{" { match_arm } "}" ;
 block_expr     = block ;
 
 (* === Patterns === *)
+(* `ctor_path` allows a single `::` segment in constructor / struct-pattern     *)
+(* heads so enum variants can be matched by their qualified name — e.g.        *)
+(* `match r { UpdateResult::Applied(t) => …, RejectReason::NotAuthorised => …} *)
+(* Nested constructor patterns (e.g. `Rejected(RejectReason::Foo)`) work by    *)
+(* recursion: each argument is itself a `pattern`.                              *)
 pattern        = base_pattern { "|" base_pattern } ;
 base_pattern   = "_" | IDENT | literal
-               | IDENT "(" [ pattern_list ] ")"
-               | IDENT "{" { IDENT ":" base_pattern "," } [ ".." ] "}"
+               | ctor_path "(" [ pattern_list ] ")"
+               | ctor_path "{" { IDENT ":" base_pattern "," } [ ".." ] "}"
+               | ctor_path                                       (* bare variant, no payload *)
                | "(" pattern "," pattern_list ")"
                | "Some" "(" pattern ")" | "None"
                | "Ok" "(" pattern ")" | "Err" "(" pattern ")" ;
+ctor_path      = IDENT [ "::" IDENT ] ;
 pattern_list   = pattern { "," pattern } ;
 
 (* === Literals === *)
