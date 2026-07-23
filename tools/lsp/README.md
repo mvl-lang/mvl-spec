@@ -2,7 +2,7 @@
 
 MVL Language Server — full compiler-backed diagnostics for `.mvl` files. Shells out to `mvl check --stdin --format=json` and maps the result to LSP diagnostics.
 
-**Version:** 0.2.0
+**Version:** 0.1.3
 **Tracks:** mvl-spec ≥ 0.1.0
 **Depends on:** the `mvl` compiler binary on PATH (or `MVL_BIN`)
 **Changelog:** [`CHANGELOG.md`](CHANGELOG.md)
