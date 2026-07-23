@@ -136,7 +136,9 @@ def _uri_to_path(uri: str) -> str:
 
 
 def _publish(ls: LanguageServer, uri: str, diagnostics: list[lsp.Diagnostic]) -> None:
-    ls.publish_diagnostics(uri, diagnostics)
+    ls.text_document_publish_diagnostics(
+        lsp.PublishDiagnosticsParams(uri=uri, diagnostics=diagnostics)
+    )
 
 
 @server.feature(lsp.TEXT_DOCUMENT_DID_OPEN)
