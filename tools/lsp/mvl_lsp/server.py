@@ -4,10 +4,12 @@
 """
 MVL Language Server — full 11-requirement diagnostics via the mvl compiler.
 
-The server shells out to `mvl check --stdin --format=json` on every
-buffer event and maps the compiler's JSON output to LSP Diagnostics.
-Surfaces type, effect, IFC, refinement, contract, termination, and
-ownership errors — everything the compiler catches.
+The server shells out to `mvl check <path> --format=json` on open and
+save and maps the compiler's JSON output to LSP Diagnostics. Checking
+the real on-disk path (rather than piping buffer text via --stdin)
+lets the compiler resolve sibling `use` imports. Surfaces type,
+effect, IFC, refinement, contract, termination, and ownership errors
+— everything the compiler catches.
 
 Install:
     pip install mvl-lsp
@@ -87,15 +89,21 @@ def _diagnostic_from_json(entry: dict, severity: lsp.DiagnosticSeverity) -> lsp.
     )
 
 
-def _check(source: str) -> list[lsp.Diagnostic]:
-    """Run the compiler over `source` (via stdin) and return LSP diagnostics."""
+def _check(path: str) -> list[lsp.Diagnostic]:
+    """Run the compiler over the on-disk file at `path` and return LSP diagnostics.
+
+    Checking the real path (rather than piping buffer text via --stdin) lets the
+    compiler resolve sibling `use` imports against the file's actual directory.
+    --stdin has no filesystem context, so it can't see sibling modules and
+    misreports any cross-file reference as undefined. The tradeoff is that
+    diagnostics reflect the last-saved state, not in-progress unsaved edits.
+    """
     if _MVL_BIN is None:
         return []
     env = {**os.environ, "MVL_NO_REEXEC": "1"}
     try:
         result = subprocess.run(
-            [_MVL_BIN, "check", "--stdin", "--format=json"],
-            input=source,
+            [_MVL_BIN, "check", path, "--format=json"],
             capture_output=True,
             text=True,
             env=env,
@@ -144,28 +152,18 @@ def _publish(ls: LanguageServer, uri: str, diagnostics: list[lsp.Diagnostic]) ->
 @server.feature(lsp.TEXT_DOCUMENT_DID_OPEN)
 def did_open(ls: LanguageServer, params: lsp.DidOpenTextDocumentParams) -> None:
     doc = params.text_document
-    _publish(ls, doc.uri, _check(doc.text))
+    _publish(ls, doc.uri, _check(_uri_to_path(doc.uri)))
 
 
-@server.feature(lsp.TEXT_DOCUMENT_DID_CHANGE)
-def did_change(ls: LanguageServer, params: lsp.DidChangeTextDocumentParams) -> None:
-    if not params.content_changes:
-        return
-    last = params.content_changes[-1]
-    text = last.text if hasattr(last, "text") else ""
-    if text:
-        _publish(ls, params.text_document.uri, _check(text))
+# No did_change handler: _check() reads from disk to resolve sibling `use`
+# imports, so re-running it per keystroke would only re-report the same
+# last-saved diagnostics. Recompute on open and on save instead.
 
 
 @server.feature(lsp.TEXT_DOCUMENT_DID_SAVE)
 def did_save(ls: LanguageServer, params: lsp.DidSaveTextDocumentParams) -> None:
     path = _uri_to_path(params.text_document.uri)
-    try:
-        with open(path, encoding="utf-8") as f:
-            source = f.read()
-    except OSError:
-        return
-    _publish(ls, params.text_document.uri, _check(source))
+    _publish(ls, params.text_document.uri, _check(path))
 
 
 @server.feature(lsp.TEXT_DOCUMENT_DID_CLOSE)

@@ -45,15 +45,34 @@ mvl_required = pytest.mark.skipif(
 
 
 @mvl_required
-def test_check_wellformed_produces_no_diagnostics() -> None:
+def test_check_wellformed_produces_no_diagnostics(tmp_path) -> None:
     from mvl_lsp.server import _check
-    assert _check("fn main() -> Int {\n    42\n}\n") == []
+    path = tmp_path / "main.mvl"
+    path.write_text("fn main() -> Int {\n    42\n}\n")
+    assert _check(str(path)) == []
 
 
 @mvl_required
-def test_check_type_mismatch_produces_diagnostic() -> None:
+def test_check_type_mismatch_produces_diagnostic(tmp_path) -> None:
     from mvl_lsp.server import _check
-    diagnostics = _check('fn main() -> Int {\n    let x: String = "hello";\n    x\n}\n')
+    path = tmp_path / "main.mvl"
+    path.write_text('fn main() -> Int {\n    let x: String = "hello";\n    x\n}\n')
+    diagnostics = _check(str(path))
     assert len(diagnostics) >= 1
     assert any("type mismatch" in d.message.lower() or "expected" in d.message.lower()
                for d in diagnostics)
+
+
+@mvl_required
+def test_check_resolves_sibling_module_imports(tmp_path) -> None:
+    """Regression test: checking the real path (not --stdin) must resolve
+    `use` imports against sibling files in the same directory."""
+    from mvl_lsp.server import _check
+    (tmp_path / "helper.mvl").write_text(
+        "pub fn double(x: Int) -> Int {\n    x * 2\n}\n"
+    )
+    main = tmp_path / "main.mvl"
+    main.write_text(
+        "use helper.{double}\n\nfn main() -> Int {\n    double(21)\n}\n"
+    )
+    assert _check(str(main)) == []
