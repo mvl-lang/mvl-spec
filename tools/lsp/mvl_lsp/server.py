@@ -33,7 +33,7 @@ from lsprotocol import types as lsp
 from pygls.lsp.server import LanguageServer
 
 SERVER_NAME = "mvl-lsp"
-SERVER_VERSION = "0.2.0"
+SERVER_VERSION = "0.1.3"
 
 MVL_TIMEOUT_SECONDS = 10
 
