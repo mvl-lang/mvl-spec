@@ -98,6 +98,13 @@ def _check(path: str) -> list[lsp.Diagnostic]:
     misreports any cross-file reference as undefined. The tradeoff is that
     diagnostics reflect the last-saved state, not in-progress unsaved edits.
     """
+    if path.endswith("_test.mvl"):
+        # `mvl check` deliberately excludes *_test.mvl files by filename
+        # (see `mvl test`) — their `test fn` blocks are meant to be
+        # transpiled and run via `mvl test`/cargo test, not semantically
+        # checked. Asking `mvl check` for one directly returns a plain-text
+        # "No .mvl files found" rather than JSON, so skip the call entirely.
+        return []
     if _MVL_BIN is None:
         return []
     env = {**os.environ, "MVL_NO_REEXEC": "1"}

@@ -76,3 +76,13 @@ def test_check_resolves_sibling_module_imports(tmp_path) -> None:
         "use helper.{double}\n\nfn main() -> Int {\n    double(21)\n}\n"
     )
     assert _check(str(main)) == []
+
+
+def test_check_skips_test_files_without_invoking_compiler(tmp_path) -> None:
+    """`mvl check` excludes *_test.mvl by filename and returns a plain-text
+    "No .mvl files found" for one directly — not JSON. _check() must skip
+    these files itself rather than surface that as a bogus diagnostic."""
+    from mvl_lsp.server import _check
+    path = tmp_path / "whatever_test.mvl"
+    path.write_text("this is not even valid mvl syntax {{{\n")
+    assert _check(str(path)) == []
