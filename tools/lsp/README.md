@@ -1,6 +1,6 @@
 # mvl-lsp
 
-MVL Language Server — full compiler-backed diagnostics for `.mvl` files. Shells out to `mvl check --stdin --format=json` and maps the result to LSP diagnostics.
+MVL Language Server — full compiler-backed diagnostics for `.mvl` files. Shells out to `mvl check <path> --format=json` and maps the result to LSP diagnostics.
 
 **Version:** 0.1.3
 **Tracks:** mvl-spec ≥ 0.1.0
@@ -44,7 +44,7 @@ Each LSP diagnostic carries the compiler's error code (`E0001`, etc.) and points
 
 ## Behavior
 
-- **On open / change / save:** run `mvl check --stdin --format=json` with the current buffer.
+- **On open / save:** run `mvl check <path> --format=json` against the real file on disk, so sibling `use` imports resolve correctly. No recheck on change — diagnostics reflect the last-saved state.
 - **On close:** clear diagnostics for that URI.
 - **Timeout:** each check is capped at 10s (files that exceed it are probably not `.mvl` you want the LSP interpreting).
 - **Env passed to child:** inherits the parent's env with `MVL_NO_REEXEC=1` added, so the LSP always runs the binary it was pointed at rather than being redirected by `requires-mvl`.
