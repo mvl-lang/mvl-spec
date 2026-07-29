@@ -92,7 +92,13 @@ jobs:
 
       - name: Publish to PyPI
         # No username/password: omitting them is what selects trusted publishing.
-        uses: pypa/gh-action-pypi-publish@2834a314042ef964da07689278dd1e9d773e8afd # v1.14.1
+        # NOT SHA-pinned, unlike every other action here. This one is a Docker
+        # container action: it pulls ghcr.io/pypa/gh-action-pypi-publish tagged
+        # with whatever ref it was invoked by, and pypa publishes images tagged
+        # only with release tags — never commit SHAs. A SHA pin fails with
+        # `manifest unknown` before it can authenticate. A version tag is the
+        # tightest available pin; pypa does not move published release tags.
+        uses: pypa/gh-action-pypi-publish@v1.14.1
         with:
           # This action is not a `run` step, so defaults.run.working-directory
           # does not apply — the path must be given from the repo root.
