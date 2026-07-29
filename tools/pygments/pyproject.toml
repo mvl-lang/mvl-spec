@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pygments-mvl"
+version = "0.1.5"
+description = "Pygments lexer for MVL (Maximum Verifiable Language)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+authors = [{ name = "MVL Team", email = "noreply@mvl-lang.org" }]
+keywords = ["pygments", "lexer", "syntax-highlighting", "mvl"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Topic :: Software Development :: Documentation",
+  "Topic :: Text Processing :: Markup",
+]
+dependencies = ["pygments>=2.17"]
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+
+# This is what makes `pygmentize -l mvl` and ```mvl fences work anywhere
+# Pygments is installed — mkdocs-material, Sphinx, Hugo/Chroma, Jupyter.
+[project.entry-points."pygments.lexers"]
+mvl = "mvl_pygments.lexer:MvlLexer"
+
+[project.urls]
+Homepage = "https://mvl-lang.org"
+Repository = "https://github.com/mvl-lang/mvl-spec"
+Changelog = "https://github.com/mvl-lang/mvl-spec/blob/main/tools/pygments/CHANGELOG.md"
+
+[tool.setuptools.packages.find]
+include = ["mvl_pygments*"]

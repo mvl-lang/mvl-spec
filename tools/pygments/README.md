@@ -1,10 +1,16 @@
 # pygments-mvl
 
-**Status:** Planned. Empty for now.
+Pygments lexer for MVL source code.
 
-Pygments lexer for MVL source code. To be built per issue [mvl-lang/mvl#1812](https://github.com/mvl-lang/mvl/issues/1812).
+```bash
+pip install pygments-mvl
+pygmentize -l mvl example.mvl
+```
 
-## Planned structure
+Registers under the `mvl` alias and claims `*.mvl`, so ```` ```mvl ```` fences work
+anywhere Pygments is installed.
+
+## Structure
 
 ```
 tools/pygments/
@@ -30,11 +36,15 @@ tools/pygments/
 
 ## Publishing
 
-```
-git tag pygments-v0.1.0
+```bash
+git tag pygments-v0.1.5
 git push --tags
-# CI: cd tools/pygments && python -m build && twine upload
 ```
+
+`.github/workflows/publish-pygments.yml` builds and uploads via PyPI Trusted
+Publishing (OIDC) — no API token. It refuses to publish unless
+`mvl_pygments/keywords.py` carries the generated banner, so hand-written keyword
+tables cannot reach PyPI.
 
 ## Downstream consumers
 

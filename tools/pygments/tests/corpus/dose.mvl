@@ -1,0 +1,21 @@
+// Refinement-heavy sample, shaped after the dose_scheduling case study.
+use std.io;
+
+type Dose = Int where self > 0 && self <= 500
+
+total fn total_infusion_dose(rate: Int, hours: Int) -> Int
+  requires rate > 0
+  requires hours > 0 && hours <= 24
+  ensures old(rate) == rate
+{
+  ghost let bound: Int = rate * 24;
+  return rate * hours;
+}
+
+actor Pump {
+  remaining: Int,
+
+  pub fn dispense(d: Dose) -> Unit ! Console {
+    println("dispensing");
+  }
+}
