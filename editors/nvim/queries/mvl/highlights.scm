@@ -87,8 +87,10 @@
   "with"
 ] @keyword.modifier
 
-(declassify_expr "declassify" @keyword.special)
-(sanitize_expr "sanitize" @keyword.special)
+; #894 removed declassify()/sanitize() in favour of named relabel
+; transitions. `relabel` itself is already captured as a keyword above;
+; this highlights the transition name at the call site.
+(relabel_expr (identifier) @function.macro)
 
 ; ============================================================
 ; Capability annotations (ownership/isolation)

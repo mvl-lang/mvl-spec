@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Dropped `declassify_expr` / `sanitize_expr` highlight captures — #894
+  removed both constructs. Added a capture for the transition name in
+  `relabel_expr`. README's label table listed `Public` and `Clean`, neither
+  of which is a label; replaced with the six `stdlib_labels`.
+
 ## [0.1.3] — 2026-07-22
 
 ### Fixed

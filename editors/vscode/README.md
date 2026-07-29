@@ -54,8 +54,8 @@ Or install without packaging:
 | `total`, `partial` | `storage.modifier.totality` | Purple |
 | `public`, `tainted`, `secret` | `storage.modifier.security` | Purple |
 | `iso`, `val`, `ref`, `tag` | `storage.modifier.capability` | Purple |
-| `Public[T]`, `Secret[T]`, … | `storage.type.security-label` | Yellow |
-| `sanitize`, `declassify` | `keyword.other.special-form` | Red/Pink |
+| `Tainted[T]`, `Secret[T]`, `ConfigPath[T]`, … | `storage.type.security-label` | Yellow |
+| `relabel <name>` | `keyword.other.special-form` | Red/Pink |
 | `IO`, `Console`, `DB`, … | `keyword.other.effect` | Blue |
 | `fn`, `type`, `module`, … | `keyword.other.declaration` | Blue |
 | `if`, `match`, `let`, … | `keyword.control` | Purple |
@@ -86,7 +86,7 @@ etc/vscode-mvl/
 
 - TextMate grammars are regex-based and do not have structural awareness.
   Highlighting is best-effort for complex constructs like nested generic
-  types with refinements (`Public[Int where self ] 0>`).
+  types with refinements (`Secret[Int where self ] 0>`).
 
 - VS Code 1.93+ has **experimental** tree-sitter support behind a setting.
   A future version of this extension may add tree-sitter queries

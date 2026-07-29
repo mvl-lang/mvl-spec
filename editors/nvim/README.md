@@ -122,8 +122,8 @@ For deeper inspection, open any `.mvl` file and run:
 | `total`, `partial` | `@keyword.modifier` |
 | `public`, `tainted`, `secret` (fn modifiers) | `@keyword.modifier` |
 | `iso`, `val`, `ref`, `tag` (capabilities) | `@keyword.modifier` |
-| `Public`, `Tainted`, `Secret`, `Clean` (type labels) | `@type.qualifier` |
-| `sanitize`, `declassify` | `@keyword.special` |
+| `Tainted`, `Secret`, `ConfigPath`, `DbUrl`, `ApiEndpoint`, `AuditTarget` (type labels) | `@type.qualifier` |
+| `relabel <name>` (transition name) | `@function.macro` |
 | `Option`, `Result` | `@type.builtin` |
 | `IO`, `Console`, `DB`, `Net`, … | `@keyword.effect` |
 | `None`, `true`, `false` | `@constant.builtin` |
@@ -156,11 +156,11 @@ vim.api.nvim_set_hl(0, "@type.qualifier",   { fg = "#ffcb6b", bold = true })
 
 ## Known Limitations
 
-- `Public[Int where self ] 0>` — the `>` in a refinement predicate inside
+- `Secret[Int where self ] 0>` — the `>` in a refinement predicate inside
   a generic type bracket causes a parse ambiguity in the context-free grammar.
   Syntax highlighting still works for surrounding code; only the specific
   expression inside the brackets may be highlighted incorrectly.
-  Workaround: `type PositiveInt = Int where self > 0` then `Public[PositiveInt]`.
+  Workaround: `type PositiveInt = Int where self > 0` then `Secret[PositiveInt]`.
 
 ## File Structure
 

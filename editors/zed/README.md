@@ -80,7 +80,7 @@ If none of that happens, the extension is not loading — see Troubleshooting be
 
 ## Features
 
-- **Syntax highlighting** — keywords, types, security labels (`Public` / `Tainted` / `Secret`), capabilities (`iso` / `val` / `ref` / `tag`), totality modifiers (`total` / `partial`), effects (`! Console`, `! DB`), special forms (`sanitize`, `declassify`), refinements, operators
+- **Syntax highlighting** — keywords, types, security labels (`Tainted` / `Secret` / `ConfigPath` / `DbUrl` / `ApiEndpoint` / `AuditTarget`), capabilities (`iso` / `val` / `ref` / `tag`), totality modifiers (`total` / `partial`), effects (`! Console`, `! DB`), named IFC transitions (`relabel <name>`), refinements, operators
 - **Bracket matching** — `{}`, `()`, `[]`, strings, char literals
 - **Smart indentation** — increases after `{`, decreases before `}`
 - **Filetype detection** — `.mvl` files automatically use MVL mode

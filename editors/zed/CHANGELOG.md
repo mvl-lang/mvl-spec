@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Dropped `declassify_expr` / `sanitize_expr` highlight captures — #894
+  removed both constructs. Added a capture for the transition name in
+  `relabel_expr`. Grammar `rev` bumped `dd51a5f` → `009a50a`, the first
+  `tree-sitter-mvl` `main` commit with the corrected IFC label set; the old
+  pin predated the fix.
+
 ## [0.1.3] — 2026-07-22
 
 ### Fixed

@@ -24,7 +24,7 @@ tools/pygments/
 ## Design notes
 
 - Keyword sets come from `grammar/keywords.yaml` via `tools/generators/gen_pygments.py`.
-- Handle effect syntax (`! Console + Net`), refinements (`where x > 0`), contracts (`requires`, `ensures`, `invariant`, `decreases`), capabilities (`iso`, `val`, `ref`), IFC labels (`Public[T]`, `Tainted[T]`, `Secret[T]`).
+- Handle effect syntax (`! Console + Net`), refinements (`where x > 0`), contracts (`requires`, `ensures`, `invariant`, `decreases`), capabilities (`iso`, `val`, `ref`), IFC labels (`Tainted[T]`, `Secret[T]`, and the capability labels `ConfigPath[T]` / `DbUrl[T]` / `ApiEndpoint[T]` / `AuditTarget[T]`). There is no `Public` label — unlabeled is public by default.
 - String literals: single-line, triple-quoted, raw (`r"..."`), raw triple.
 - Comments: `//` line, `///` doc.
 

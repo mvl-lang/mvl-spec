@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- TextMate grammar carried the IFC defects independently of tree-sitter:
+  `security-labels` matched `(Public|Tainted|Secret|Clean)` and is now the
+  six `stdlib_labels`; `special-forms` matched `(sanitize|declassify)`,
+  both removed by #894, and now matches `relabel <name>`.
+
 ## [0.1.3] — 2026-07-22
 
 Version aligned to mvl-spec `0.1.3`.  No functional changes to the
