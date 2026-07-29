@@ -2,6 +2,20 @@
 
 ## [Unreleased]
 
+## [0.1.4] — 2026-07-29
+
+### Added
+
+- **First release published to PyPI**: <https://pypi.org/project/mvl-lsp/>.
+  Install with `pip install mvl-lsp`.
+- Published via PyPI Trusted Publishing (OIDC) — no API token or repository
+  secret is involved. See `.github/workflows/publish-lsp.yml`.
+
+### Changed
+
+- Version aligned to mvl-spec `0.1.4`. Diagnostics pick up the tree-sitter-mvl
+  grammar carrying the corrected IFC label set and the wired `ghost let` rule.
+
 ## [0.1.3] — 2026-07-22
 
 Version aligned to mvl-spec `0.1.3`.  No functional LSP changes;

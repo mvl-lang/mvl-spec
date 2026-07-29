@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.1.4] — 2026-07-29
+
 ### Fixed
 
 - TextMate grammar carried the IFC defects independently of tree-sitter:
