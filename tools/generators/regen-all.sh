@@ -12,17 +12,23 @@
 # --check exits non-zero if any artifact is stale, changing nothing.
 set -euo pipefail
 
-cd "$(dirname "$0")"
-
+# Parse args BEFORE changing directory. A relative --tree-sitter-dir must resolve
+# against the caller's cwd, not this script's location. Getting this wrong made
+# both cross-repo generators silently skip while CI reported success.
 CHECK=""
 TS_DIR=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --check) CHECK="--check"; shift ;;
-    --tree-sitter-dir) TS_DIR="$2"; shift 2 ;;
+    --tree-sitter-dir)
+      [ -d "$2" ] || { echo "--tree-sitter-dir: no such directory: $2" >&2; exit 2; }
+      TS_DIR="$(cd "$2" && pwd)"
+      shift 2 ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
 done
+
+cd "$(dirname "$0")"
 
 TS_ARG=()
 [ -n "$TS_DIR" ] && TS_ARG=(--tree-sitter-dir "$TS_DIR")

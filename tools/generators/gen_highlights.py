@@ -172,6 +172,11 @@ def main() -> int:
     )
     args = ap.parse_args()
 
+    # An explicitly-passed --tree-sitter-dir is a promise the target is there.
+    # Skipping in that case turns a no-op into a green check — which is exactly
+    # how this gate first passed while generating nothing.
+    explicit = any(a.startswith("--tree-sitter-dir") for a in sys.argv[1:])
+
     kw = K.load()
     body = render(kw)
 
@@ -180,6 +185,12 @@ def main() -> int:
         root = args.tree_sitter_dir if kind == "tree-sitter" else K.SPEC_ROOT
         path = root / rel
         if not path.exists():
+            if kind == "tree-sitter" and explicit:
+                raise SystemExit(
+                    f"  MISSING: {path}\n"
+                    "--tree-sitter-dir was given, so this target is required. "
+                    "Refusing to skip: a skipped generator must not read as a pass."
+                )
             print(f"  skip (absent): {path}", file=sys.stderr)
             continue
         old = path.read_text()
