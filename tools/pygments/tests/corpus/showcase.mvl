@@ -1,0 +1,19 @@
+/// Doc comment.
+// Line comment.
+use std.io;
+
+label Custom;
+relabel trust: Tainted -> _ audit;
+
+total fn transfer(amount: Int, key: Secret[String], c: ConfigPath[String]) -> Result[Int, String] ! Console + DB
+  requires amount > 0
+  ensures old(amount) == amount
+{
+  ghost let witness: Int = len(key);
+  let end: Int = 5;
+  let timeout: Int = 30;
+  let audit: Bool = true;
+  let msg: String = "hi";
+  let raw: String = r"no \escape";
+  match Some(amount) { Some(v) => v, None => 0 }
+}

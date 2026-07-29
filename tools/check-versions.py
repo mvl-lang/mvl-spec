@@ -172,6 +172,13 @@ LOCAL_SITES: list[VersionSite] = [
                 read_toml_version, write_toml_version),
     VersionSite("tools/lsp/CHANGELOG.md", "changelog", "local",
                 read_changelog_top, None),
+    # Tools: Pygments lexer (#1). mvl_pygments/__init__.py carries __version__
+    # too, but it is not listed here — it is checked by the package's own test
+    # suite, and adding a site for it would need a Python-source reader.
+    VersionSite("tools/pygments/pyproject.toml", "toml-package", "local",
+                read_toml_version, write_toml_version),
+    VersionSite("tools/pygments/CHANGELOG.md", "changelog", "local",
+                read_changelog_top, None),
 ]
 
 # Tree-sitter-mvl external repo — canonical home of the grammar

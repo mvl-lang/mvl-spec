@@ -47,8 +47,8 @@ python3 gen_vscode.py $CHECK
 echo "grammar.js security_label (tree-sitter-mvl)"
 python3 gen_tree_sitter.py $CHECK "${TS_ARG[@]+"${TS_ARG[@]}"}"
 
-# gen_pygments.py lands with the lexer itself — mvl-lang/mvl-spec#1, targeted at
-# 0.1.5. There is no tools/pygments/mvl_pygments/ package to generate into yet.
+echo "keywords.py (pygments)"
+python3 gen_pygments.py $CHECK
 
 if [ -n "$CHECK" ]; then
   echo
