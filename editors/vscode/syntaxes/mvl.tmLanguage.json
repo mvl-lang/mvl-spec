@@ -2,56 +2,104 @@
   "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
   "name": "MVL",
   "scopeName": "source.mvl",
-  "fileTypes": ["mvl"],
+  "fileTypes": [
+    "mvl"
+  ],
   "patterns": [
-    { "include": "#strings" },
-    { "include": "#comments" },
-    { "include": "#chars" },
-    { "include": "#numbers" },
-    { "include": "#special-forms" },
-    { "include": "#effects-annotation" },
-    { "include": "#security-labels" },
-    { "include": "#totality-modifiers" },
-    { "include": "#security-modifiers" },
-    { "include": "#capability-annotations" },
-    { "include": "#keywords-declaration" },
-    { "include": "#keywords-control" },
-    { "include": "#keywords-expression" },
-    { "include": "#constants" },
-    { "include": "#constructors" },
-    { "include": "#builtin-types" },
-    { "include": "#function-definition" },
-    { "include": "#type-definition" },
-    { "include": "#function-call" },
-    { "include": "#type-names" },
-    { "include": "#operators" },
-    { "include": "#punctuation" }
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#chars"
+    },
+    {
+      "include": "#numbers"
+    },
+    {
+      "include": "#special-forms"
+    },
+    {
+      "include": "#effects-annotation"
+    },
+    {
+      "include": "#security-labels"
+    },
+    {
+      "include": "#totality-modifiers"
+    },
+    {
+      "include": "#capability-annotations"
+    },
+    {
+      "include": "#keywords-declaration"
+    },
+    {
+      "include": "#keywords-control"
+    },
+    {
+      "include": "#keywords-expression"
+    },
+    {
+      "include": "#constants"
+    },
+    {
+      "include": "#constructors"
+    },
+    {
+      "include": "#builtin-types"
+    },
+    {
+      "include": "#function-definition"
+    },
+    {
+      "include": "#type-definition"
+    },
+    {
+      "include": "#function-call"
+    },
+    {
+      "include": "#type-names"
+    },
+    {
+      "include": "#operators"
+    },
+    {
+      "include": "#punctuation"
+    },
+    {
+      "include": "#keywords-refinement"
+    }
   ],
   "repository": {
-
     "comments": {
       "name": "comment.line.double-slash.mvl",
       "match": "//.*$"
     },
-
     "strings": {
       "name": "string.quoted.double.mvl",
       "begin": "\"",
       "end": "\"",
       "patterns": [
-        { "name": "constant.character.escape.mvl", "match": "\\\\." }
+        {
+          "name": "constant.character.escape.mvl",
+          "match": "\\\\."
+        }
       ]
     },
-
     "chars": {
       "name": "string.quoted.single.mvl",
       "begin": "'",
       "end": "'",
       "patterns": [
-        { "name": "constant.character.escape.mvl", "match": "\\\\." }
+        {
+          "name": "constant.character.escape.mvl",
+          "match": "\\\\."
+        }
       ]
     },
-
     "numbers": {
       "patterns": [
         {
@@ -64,7 +112,6 @@
         }
       ]
     },
-
     "special-forms": {
       "comment": "Named IFC relabel transitions. #894 removed sanitize() and declassify(); a named relabel is now the only trust-boundary crossing.",
       "patterns": [
@@ -74,7 +121,6 @@
         }
       ]
     },
-
     "effects-annotation": {
       "comment": "Effect list after ! — IO, Console, DB, etc.",
       "patterns": [
@@ -84,9 +130,8 @@
         }
       ]
     },
-
     "security-labels": {
-      "comment": "Stdlib IFC labels, mirroring grammar/keywords.yaml stdlib_labels. There is no Public label (unlabeled is public by default, grammar.ebnf:139-140) and no Clean label. User-declared labels via `label Foo;` are not matched: TextMate cannot resolve them.",
+      "comment": "Generated from grammar.ebnf by gen_vscode.py — do not edit the matches.",
       "patterns": [
         {
           "name": "storage.type.security-label.mvl",
@@ -94,9 +139,8 @@
         }
       ]
     },
-
     "totality-modifiers": {
-      "comment": "total / partial — termination annotation on functions",
+      "comment": "Generated from grammar.ebnf by gen_vscode.py — do not edit the matches.",
       "patterns": [
         {
           "name": "storage.modifier.totality.mvl",
@@ -104,19 +148,8 @@
         }
       ]
     },
-
-    "security-modifiers": {
-      "comment": "public / tainted / secret — security modifiers on function declarations",
-      "patterns": [
-        {
-          "name": "storage.modifier.security.mvl",
-          "match": "\\b(public|tainted|secret)\\b"
-        }
-      ]
-    },
-
     "capability-annotations": {
-      "comment": "iso / val / ref / tag — ownership and capability annotations on parameters",
+      "comment": "Generated from grammar.ebnf by gen_vscode.py — do not edit the matches.",
       "patterns": [
         {
           "name": "storage.modifier.capability.mvl",
@@ -124,38 +157,37 @@
         }
       ]
     },
-
     "keywords-declaration": {
       "patterns": [
         {
           "name": "keyword.other.declaration.mvl",
-          "match": "\\b(type|fn|const|struct|enum)\\b"
+          "match": "\\b(fn|type|const|extern|impl|builtin|struct|enum|actor|effect|test|label|relabel)\\b"
         },
         {
           "name": "keyword.other.module.mvl",
           "match": "\\b(use|pub)\\b"
         }
-      ]
+      ],
+      "comment": "Generated from grammar.ebnf by gen_vscode.py — do not edit the matches."
     },
-
     "keywords-control": {
       "patterns": [
         {
           "name": "keyword.control.mvl",
-          "match": "\\b(let|return|if|else|match|for|in|while|where|mut)\\b"
+          "match": "\\b(if|else|for|in|while|match|return|select|let|ghost)\\b"
         }
-      ]
+      ],
+      "comment": "Generated from grammar.ebnf by gen_vscode.py — do not edit the matches."
     },
-
     "keywords-expression": {
       "patterns": [
         {
           "name": "keyword.operator.expression.mvl",
-          "match": "\\b(move|consume)\\b"
+          "match": "\\b(as|consume)\\b"
         }
-      ]
+      ],
+      "comment": "Generated from grammar.ebnf by gen_vscode.py — do not edit the matches."
     },
-
     "constants": {
       "patterns": [
         {
@@ -164,13 +196,13 @@
         },
         {
           "name": "constant.language.null.mvl",
-          "match": "\\bNone\\b"
+          "match": "\\b(None)\\b"
         }
-      ]
+      ],
+      "comment": "Generated from grammar.ebnf by gen_vscode.py — do not edit the matches."
     },
-
     "constructors": {
-      "comment": "Result/Option constructors and enum variant constructors",
+      "comment": "Generated from grammar.ebnf by gen_vscode.py — do not edit the matches.",
       "patterns": [
         {
           "name": "entity.name.tag.constructor.mvl",
@@ -178,48 +210,53 @@
         }
       ]
     },
-
     "builtin-types": {
       "patterns": [
         {
           "name": "support.type.builtin.mvl",
-          "match": "\\b(Option|Result|Bool|Char|Byte|String|Int|Int8|Int16|Int32|Int64|UInt8|UInt16|UInt32|UInt64|Float|Float32|Float64|Array|Map|Set|Range|Unit)\\b"
+          "match": "\\b(Int|Int8|Int16|Int32|Int64|UInt8|UInt16|UInt32|UInt64|Float|Float32|Float64|Bool|Char|Byte|String|Unit|Option|Result|List|Array|Map|Set)\\b"
         }
-      ]
+      ],
+      "comment": "Generated from grammar.ebnf by gen_vscode.py — do not edit the matches."
     },
-
     "function-definition": {
       "comment": "Highlight the name in fn name(...)",
       "match": "\\b(fn)\\s+([a-z_][a-zA-Z0-9_]*)",
       "captures": {
-        "1": { "name": "keyword.other.declaration.mvl" },
-        "2": { "name": "entity.name.function.mvl" }
+        "1": {
+          "name": "keyword.other.declaration.mvl"
+        },
+        "2": {
+          "name": "entity.name.function.mvl"
+        }
       }
     },
-
     "type-definition": {
       "comment": "Highlight the name in type Name = ...",
       "match": "\\b(type)\\s+([A-Z][a-zA-Z0-9_]*)",
       "captures": {
-        "1": { "name": "keyword.other.declaration.mvl" },
-        "2": { "name": "entity.name.type.mvl" }
+        "1": {
+          "name": "keyword.other.declaration.mvl"
+        },
+        "2": {
+          "name": "entity.name.type.mvl"
+        }
       }
     },
-
     "function-call": {
       "comment": "identifier followed by ( — function or constructor call",
       "match": "\\b([a-z_][a-zA-Z0-9_]*)\\s*(?=\\()",
       "captures": {
-        "1": { "name": "entity.name.function.call.mvl" }
+        "1": {
+          "name": "entity.name.function.call.mvl"
+        }
       }
     },
-
     "type-names": {
       "comment": "Identifiers starting with uppercase — type names",
       "match": "\\b[A-Z][a-zA-Z0-9_]*\\b",
       "name": "entity.name.type.mvl"
     },
-
     "operators": {
       "patterns": [
         {
@@ -269,7 +306,6 @@
         }
       ]
     },
-
     "punctuation": {
       "patterns": [
         {
@@ -305,7 +341,15 @@
           "match": "\\|"
         }
       ]
+    },
+    "keywords-refinement": {
+      "comment": "Generated from grammar.ebnf by gen_vscode.py — do not edit the matches.",
+      "patterns": [
+        {
+          "name": "keyword.other.refinement.mvl",
+          "match": "\\b(where|requires|ensures|invariant|with|decreases|forall|exists)\\b"
+        }
+      ]
     }
-
   }
 }

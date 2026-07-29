@@ -1,0 +1,88 @@
+name: Check drift
+
+# grammar/grammar.ebnf is the source for every keyword table in this repo and in
+# mvl-lang/tree-sitter-mvl (ADR-0060, mvl-lang/mvl#2050). This job regenerates
+# each artifact and fails if the committed version differs.
+#
+# Without it, `grammar/keywords.yaml` claimed to be the single source of truth for
+# three releases while nothing read it — which is how `Public` and `Clean`
+# survived two weeks past PR #31 in five separate artifacts. A declared source
+# with no failing consumer is a document, not a source.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "grammar/**"
+      - "tools/generators/**"
+      - "editors/**"
+      - ".github/workflows/check-drift.yml"
+  pull_request:
+    paths:
+      - "grammar/**"
+      - "tools/generators/**"
+      - "editors/**"
+      - ".github/workflows/check-drift.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    name: generated artifacts match grammar.ebnf
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out mvl-spec
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: mvl-spec
+
+      # gen_highlights.py and gen_tree_sitter.py write into the grammar repo, so
+      # it has to be present as a sibling — the same layout tools/check-versions.py
+      # assumes. Without it those two generators skip, and a skipped generator
+      # must not read as a pass.
+      - name: Check out tree-sitter-mvl as a sibling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: mvl-lang/tree-sitter-mvl
+          path: tree-sitter-mvl
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Install PyYAML
+        run: pip install --disable-pip-version-check pyyaml
+
+      - name: Confirm every generator has a target
+        # A generator that silently skips would let drift through. Fail here
+        # rather than reporting success on a partial run.
+        working-directory: mvl-spec
+        run: |
+          set -euo pipefail
+          test -f ../tree-sitter-mvl/grammar.js \
+            || { echo "::error::tree-sitter-mvl checkout missing grammar.js"; exit 1; }
+          test -f ../tree-sitter-mvl/queries/highlights.scm \
+            || { echo "::error::tree-sitter-mvl checkout missing queries/highlights.scm"; exit 1; }
+          echo "both cross-repo targets present"
+
+      - name: check-drift
+        working-directory: mvl-spec
+        run: tools/generators/check-drift.sh --tree-sitter-dir ../tree-sitter-mvl
+
+      - name: Show what drifted
+        if: failure()
+        working-directory: mvl-spec
+        run: |
+          echo "::group::regenerating to show the diff"
+          tools/generators/regen-all.sh --tree-sitter-dir ../tree-sitter-mvl || true
+          git --no-pager diff --stat
+          git --no-pager diff
+          echo "::endgroup::"
+          echo "::notice::Edit grammar/grammar.ebnf, then run tools/generators/regen-all.sh"
