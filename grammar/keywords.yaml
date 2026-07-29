@@ -5,11 +5,29 @@
 # generate their keyword tables from this file.
 #
 # Consumers:
-#   - mvl-lang/tree-sitter-mvl grammar.js (via tools/generators/gen_tree_sitter.js)
+#   - highlights.scm x3  (via tools/generators/gen_highlights.py) — tree-sitter-mvl,
+#     editors/nvim, editors/zed; all three from this one source
+#   - editors/vscode/syntaxes/            (via tools/generators/gen_vscode.py)
 #   - tools/pygments/mvl_pygments/        (via tools/generators/gen_pygments.py)
-#   - editors/vscode/syntaxes/            (via tools/generators/gen_vscode.js)
-#   - The MVL compiler (mvl/src/mvl/parser/lexer.rs) — currently hand-maintained,
-#     to be regenerated from this file as a future consistency-check target.
+#   - mvl-lang/tree-sitter-mvl grammar.js (via tools/generators/gen_tree_sitter.py)
+#   - The MVL compiler (mvl/src/mvl/parser/lexer/mod.rs) — hand-maintained, but
+#     cross-checked against this file by mvl's `make validate-keywords`.
+#
+# FIVE CATEGORIES, AND ONLY THE FIRST IS RESERVED. Conflating them is what
+# produced the drift this file exists to prevent, so it is spelled out:
+#
+#   declaration .. refinements   43 — RESERVED. The lexer will not accept these
+#                                     as identifiers. Matches the compiler's
+#                                     reserved set exactly.
+#   pattern                       4 — CONSTRUCTORS. Some/None/Ok/Err are not
+#                                     lexer keywords; they are matched as paths.
+#   contextual                    4 — special in ONE syntactic position, ordinary
+#                                     identifiers everywhere else.
+#   builtin_types                23 — reserved by convention only, not by the lexer.
+#   stdlib_labels                 6 — ordinary identifiers.
+#
+# 43 reserved; 37 more that consumers must treat differently. Anything emitting a
+# flat keyword list across all five categories is wrong.
 #
 # Rule: adding a keyword requires updating this file + the EBNF in
 # grammar.ebnf in the same PR. Drift is a CI failure (see .github/workflows/
@@ -70,8 +88,6 @@ boolean:
 
 refinements:
   - where
-  - self
-  - old
   - requires
   - ensures
   - invariant
@@ -85,6 +101,25 @@ pattern:
   - None
   - Ok
   - Err
+
+# Contextual keywords — special in ONE syntactic position, ordinary identifiers
+# everywhere else. The compiler lexer does not reserve these; it matches them as
+# `TokenKind::Ident` and disambiguates by position. Highlighters must anchor on
+# the enclosing node rather than matching the bare word, or `let end = 5` renders
+# `end` as a keyword.
+#
+#   self     refinement predicates only — the value being refined
+#   old      `ensures` clauses only — pre-state of a value
+#   end      session types only, at `session_op` (grammar.ebnf:159); the compiler
+#            matches it as an Ident at src/mvl/parser/types.rs:1324
+#   timeout  `select` arms only (grammar.ebnf:211-215, which states outright that
+#            it is contextual and NOT reserved); compiler matches it as an Ident
+#            at src/mvl/parser/expressions.rs:842
+contextual:
+  - self
+  - old
+  - end
+  - timeout
 
 # Type-level identifiers that are effectively reserved by convention
 # (not enforced as reserved words by the lexer, but users should not shadow).

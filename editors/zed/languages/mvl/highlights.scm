@@ -11,27 +11,88 @@
 ; Keywords — declarations
 ; ============================================================
 
+; BEGIN GENERATED KEYWORDS
+; DO NOT EDIT THIS BLOCK BY HAND. Generated from mvl-spec
+; grammar/keywords.yaml by tools/generators/gen_highlights.py. Run
+; tools/generators/regen-all.sh after editing keywords.yaml.
+;
+; Literal keyword lists only. Node-anchored captures are hand-written
+; below this region and survive regeneration.
+
+; declarations
 [
-  "type"
   "fn"
+  "type"
   "const"
+  "extern"
+  "impl"
+  "builtin"
   "struct"
   "enum"
   "actor"
   "effect"
+  "test"
   "label"
   "relabel"
-  "impl"
-  "extern"
-  "test"
-  "builtin"
-  "end"
 ] @keyword
 
+; imports
 [
   "use"
   "pub"
 ] @keyword.import
+
+; bindings and statements
+[
+  "let"
+  "ghost"
+  "if"
+  "else"
+  "for"
+  "in"
+  "while"
+  "match"
+  "return"
+] @keyword
+
+; refinement and contract clauses
+[
+  "where"
+  "requires"
+  "ensures"
+  "invariant"
+  "with"
+  "decreases"
+  "forall"
+  "exists"
+] @keyword.modifier
+
+; operators
+[
+  "as"
+  "consume"
+] @keyword.operator
+
+; concurrency
+[
+  "select"
+] @keyword.control
+
+; Captured via grammar nodes instead of literals, so they cannot be
+; confused with same-spelled identifiers:
+;   false, true -> (boolean_literal) @constant.builtin
+;   iso, ref, tag, val -> (capability) @keyword.modifier
+;   partial, total -> (totality) @keyword.modifier
+
+; CONTEXTUAL — never highlight these as bare words. Each is an ordinary
+; identifier outside its one position, so a flat list would highlight
+; `let end = 5`. Anchor on the enclosing node if wanted at all:
+;   self
+;   old
+;   end
+;   timeout
+; END GENERATED KEYWORDS
+
 
 ; ============================================================
 ; Keywords — totality (safety modifiers)
@@ -49,43 +110,13 @@
 ; Keywords — statements
 ; ============================================================
 
-[
-  "let"
-  "return"
-  "if"
-  "else"
-  "match"
-  "for"
-  "in"
-  "while"
-  "where"
-] @keyword
 
 ; ============================================================
 ; Keywords — expressions
 ; ============================================================
 
-[
-  "consume"
-  "as"
-] @keyword.operator
 
-[
-  "select"
-  "concurrently"
-  "timeout"
-] @keyword.control
 
-[
-  "requires"
-  "ensures"
-  "invariant"
-  "decreases"
-  "forall"
-  "exists"
-  "old"
-  "with"
-] @keyword.modifier
 
 ; #894 removed declassify()/sanitize() in favour of named relabel
 ; transitions. `relabel` itself is already captured as a keyword above;
@@ -214,6 +245,15 @@
 ; Operators
 ; ============================================================
 
+
+; ============================================================
+; Punctuation
+; ============================================================
+
+; ============================================================
+; Operators and punctuation — hand-written, not keyword-derived
+; ============================================================
+
 [
   "->"
   "=>"
@@ -234,10 +274,6 @@
   "!"
   "&"
 ] @operator
-
-; ============================================================
-; Punctuation
-; ============================================================
 
 [
   "("
