@@ -1,32 +1,102 @@
 # Generators
 
-**Status:** Planned. Empty for now.
+Scripts that regenerate downstream artifacts from **`grammar/grammar.ebnf`**.
 
-Scripts that regenerate downstream tooling artifacts from `grammar/keywords.yaml` (and eventually from `grammar/grammar.ebnf`).
-
-## Planned scripts
+## The direction
 
 ```
-tools/generators/
-├── gen_pygments.py         keywords.yaml → tools/pygments/mvl_pygments/keywords.py
-├── gen_tree_sitter.js      keywords.yaml → mvl-lang/tree-sitter-mvl grammar.js (keyword sections)
-├── gen_vscode.js           keywords.yaml → editors/vscode/syntaxes/mvl.tmLanguage.json
-├── regen-all.sh            Run all generators; used by CI drift check
-└── check-drift.sh          Verify no downstream artifact drifts from keywords.yaml
+grammar/grammar.ebnf  ─┬─►  grammar/keywords.yaml                (gen_keywords_yaml.py)
+                       ├─►  editors/nvim/queries/mvl/            (gen_highlights.py)
+                       ├─►  editors/zed/languages/mvl/           (gen_highlights.py)
+                       ├─►  tree-sitter-mvl queries/             (gen_highlights.py)
+                       ├─►  tree-sitter-mvl grammar.js           (gen_tree_sitter.py)
+                       └─►  editors/vscode/syntaxes/             (gen_vscode.py)
 ```
 
-## The discipline
+The EBNF is the source. **`keywords.yaml` is an artifact** — a machine-readable
+projection, kept because YAML is convenient for consumers that should not parse
+EBNF comments. Nobody edits it.
 
-Grammar or keyword changes flow one direction:
+That is the reverse of what this file described before 0.1.4. `keywords.yaml` used
+to be the declared source, and it was a verbatim transcription of the EBNF's own
+`=== Reserved Keywords ===` block — two copies of one list, inside the source of
+truth. See ADR-0060 (mvl-lang/mvl#2050).
 
+## Why the EBNF and not the YAML
+
+Because it can be contradicted. The EBNF is checked two ways against itself:
+
+| Source within the EBNF | Gives |
+|---|---|
+| **Productions** | Which words are grammar syntax — extracted mechanically. All 43 reserved words appear as quoted terminals. |
+| **Labelled comment blocks** | How each word is classified. Productions cannot express this: `"old"` and `"fn"` are identical as terminals. |
+
+`_keywords.py` reconciles them. A declared word appearing in no production is an
+error. A production terminal classified nowhere is an error. `keywords.yaml` had
+no equivalent check — nothing read it, so nothing could fail because of it.
+
+## Categories
+
+Only the first is reserved. Conflating them is what caused the drift these
+scripts exist to prevent.
+
+| Block | Count | Nature |
+|---|---:|---|
+| `=== Reserved Keywords ===`, `Declaration`…`Refinements` | 43 | Lexer rejects them as identifiers |
+| same block, `Pattern` | 4 | Constructors, matched as paths — not lexer keywords |
+| `=== Contextual Keywords ===` | 5 | `self old end timeout audit` — special in one position, ordinary identifiers elsewhere |
+| `=== Builtin Types ===` | 23 | Reserved by convention only |
+| `=== Stdlib IFC Labels ===` | 6 | Ordinary identifiers |
+
+**Contextual words must never be emitted as bare-word patterns.** Each is a legal
+variable name — verified: `let end: Int = 1;` compiles, while `let fn = 1;` is
+rejected. A flat keyword list highlights `let end = 5` as a keyword.
+
+**`len` is in no category.** It is a quoted terminal in `ref_atom` only because the
+refinement sub-grammar admits no arbitrary calls and must enumerate what it
+allows. In ordinary code `len` is a compiler-known method (`x.len()`); the
+free-function form `len(x)` exists only inside a predicate.
+
+## Usage
+
+```bash
+tools/generators/regen-all.sh                          # regenerate everything
+tools/generators/regen-all.sh --check                  # fail if anything is stale
+tools/generators/check-drift.sh                        # alias for --check; used by CI
+tools/generators/regen-all.sh --tree-sitter-dir ../ts  # non-sibling grammar checkout
 ```
-grammar/keywords.yaml  ─┬─►  tools/pygments/          (via gen_pygments.py)
-                       ├─►  tree-sitter-mvl repo    (via gen_tree_sitter.js)
-                       └─►  editors/vscode/          (via gen_vscode.js)
+
+Each generator also runs standalone and takes `--check`.
+
+If `grammar.js` changed, rebuild the parser — the generators do not:
+
+```bash
+cd ../tree-sitter-mvl && tree-sitter generate && tree-sitter test
 ```
 
-Editing a generated file directly is a CI failure. The `check-drift.sh` script re-runs generators and diffs against committed output; any diff fails the build.
+## Cross-repo
 
-## Why not just parse the EBNF directly?
+`gen_highlights.py` and `gen_tree_sitter.py` write into `mvl-lang/tree-sitter-mvl`,
+defaulting to a sibling checkout — the layout `tools/check-versions.py` already
+assumes. If it is absent they print a skip to stderr, so `check-drift.yml` asserts
+both targets exist before running: **a skipped generator must not read as a pass.**
 
-Long-term we should — a full EBNF parser feeding all tooling is the endgame. But keyword lists are the 80% case: they're what breaks first when the language evolves, and they're mechanical enough that a YAML file plus a few small generators is sufficient. Full-EBNF-driven codegen is a follow-up when the language stabilizes.
+## Discipline
+
+`.github/workflows/check-drift.yml` regenerates on every PR touching `grammar/`,
+`tools/generators/` or `editors/`, and fails on any diff. Editing a generated file
+directly is a CI failure. Edit the grammar and regenerate.
+
+All generators are Python, not JavaScript as this file previously specified. Python
+is already a dependency via `check-versions.py` and `tools/lsp`, so the drift check
+needs no Node in CI. All are idempotent — running twice is a no-op, which is what
+makes `--check` meaningful.
+
+## Not here yet
+
+`gen_pygments.py` lands with the lexer itself (#1, targeted at 0.1.5). There is no
+`tools/pygments/mvl_pygments/` package to generate into yet, and #1 should import
+the generated tables rather than transcribe the lists a sixth time.
+
+Full-EBNF-driven codegen — parsing productions to generate whole grammar files
+rather than keyword tables — remains a separate, later step.

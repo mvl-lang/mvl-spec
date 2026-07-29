@@ -1,19 +1,21 @@
-# MVL Reserved Keywords — Single Source of Truth
+# DO NOT EDIT THIS BLOCK BY HAND. Generated from mvl-spec
+# grammar/grammar.ebnf by tools/generators/gen_keywords_yaml.py. Run
+# tools/generators/regen-all.sh after editing the grammar.
 #
-# This file is the canonical list of MVL reserved keywords, organized by
-# semantic category. All parsers, lexers, and syntax highlighters MUST
-# generate their keyword tables from this file.
+# Categories, and what each means for a consumer:
 #
-# Consumers:
-#   - mvl-lang/tree-sitter-mvl grammar.js (via tools/generators/gen_tree_sitter.js)
-#   - tools/pygments/mvl_pygments/        (via tools/generators/gen_pygments.py)
-#   - editors/vscode/syntaxes/            (via tools/generators/gen_vscode.js)
-#   - The MVL compiler (mvl/src/mvl/parser/lexer.rs) — currently hand-maintained,
-#     to be regenerated from this file as a future consistency-check target.
+#   declaration..refinements   43  RESERVED — the lexer rejects these
+#                                  as identifiers.
+#   pattern                    4  Constructors, matched as paths. NOT
+#                                  lexer keywords.
+#   contextual                 5  Special in one syntactic position,
+#                                  ordinary identifiers elsewhere. NEVER
+#                                  emit these as bare words.
+#   builtin_types             23  Reserved by convention only.
+#   stdlib_labels              6  Ordinary identifiers.
 #
-# Rule: adding a keyword requires updating this file + the EBNF in
-# grammar.ebnf in the same PR. Drift is a CI failure (see .github/workflows/
-# check-drift.yml).
+# `len` appears in no category: it is an ordinary identifier naming a
+# compiler-known method, which ref_atom admits as len(x) inside predicates.
 
 declaration:
   - fn
@@ -61,8 +63,6 @@ ownership:
 ifc:
   - label
   - relabel
-  # Note: `declassify` and `sanitize` were removed under #894.
-  # Use `relabel name(expr, "TAG")` with a declared transition instead.
 
 boolean:
   - "true"
@@ -70,8 +70,6 @@ boolean:
 
 refinements:
   - where
-  - self
-  - old
   - requires
   - ensures
   - invariant
@@ -86,8 +84,16 @@ pattern:
   - Ok
   - Err
 
-# Type-level identifiers that are effectively reserved by convention
-# (not enforced as reserved words by the lexer, but users should not shadow).
+# Not reserved. Anchor on the enclosing production, never the bare word —
+# a flat list highlights `let end = 5` as a keyword.
+contextual:
+  - self
+  - old
+  - end
+  - timeout
+  - audit
+
+# Not enforced by the lexer; users should not shadow them.
 builtin_types:
   - Int
   - Int8
@@ -113,16 +119,11 @@ builtin_types:
   - Map
   - Set
 
-# Stdlib IFC labels — ordinary identifiers, NOT reserved words. Pre-seeded
-# into the parser's known-label set so `Tainted[T]` / `Secret[T]` parse as
-# labeled types without needing an explicit `label` declaration. User code
-# can extend the set with `label Foo;` (see `ifc:` above).
-#
-# `Public` is NOT a stdlib label — an unlabeled type is public by default.
+# Ordinary identifiers, pre-seeded into the parser's known-label set.
+# There is no `Public` label — unlabeled is public by absence.
 stdlib_labels:
   - Tainted
   - Secret
-  # Capability labels (#931):
   - ConfigPath
   - DbUrl
   - ApiEndpoint
