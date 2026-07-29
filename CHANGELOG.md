@@ -10,6 +10,34 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). While t
 
 ## [Unreleased]
 
+## [0.1.3] — 2026-07-22
+
+### Fixed
+
+- **Pattern grammar drift with compiler parser** — reconciled
+  `grammar/grammar.ebnf` with the actual Rust parser:
+  - Constructor and struct patterns now accept qualified variant heads
+    (`Enum::Variant(...)` / `Enum::Variant { ... }`) via a new
+    `ctor_path` production, plus a bare-variant alternative
+    (`Enum::Variant` with no payload).  The compiler has always accepted
+    these; the EBNF and hand-translated tree-sitter grammar had not.
+  - `construct` and `struct_pattern` allow an optional trailing comma
+    after the last field (matches the compiler's `if !self.eat(Comma) {
+    break }` behaviour).  Introduces `field_init` and `field_pattern`
+    productions.
+
+### Removed
+
+- **`tools/tree-sitter/`** — the legacy in-tree copy of the grammar is
+  gone.  The canonical grammar lives in its own repo
+  ([`mvl-lang/tree-sitter-mvl`](https://github.com/mvl-lang/tree-sitter-mvl))
+  because Zed's extension registry needs `grammar.js` at a repo root.
+  - `tools/check-versions.py` no longer tracks the removed files.
+  - The `publish-tree-sitter.yml` workflow moves to the grammar repo.
+  - `tools/generators/README.md`, `grammar/keywords.yaml`,
+    `editors/zed/README.md`, and `CLAUDE.md` all now point at the
+    external repo.
+
 ## [0.1.2] — 2026-07-15
 
 ### Fixed

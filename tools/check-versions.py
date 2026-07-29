@@ -172,18 +172,9 @@ LOCAL_SITES: list[VersionSite] = [
                 read_toml_version, write_toml_version),
     VersionSite("tools/lsp/CHANGELOG.md", "changelog", "local",
                 read_changelog_top, None),
-    # Tools: legacy tree-sitter monorepo copy (slated for removal in mvl-spec#34)
-    VersionSite("tools/tree-sitter/package.json", "json", "local",
-                read_json_version, write_json_version),
-    VersionSite("tools/tree-sitter/Cargo.toml", "toml-package", "local",
-                read_toml_version, write_toml_version),
-    VersionSite("tools/tree-sitter/pyproject.toml", "toml-package", "local",
-                read_toml_version, write_toml_version),
-    VersionSite("tools/tree-sitter/CHANGELOG.md", "changelog", "local",
-                read_changelog_top, None),
 ]
 
-# Tree-sitter-mvl external repo — same file set as tools/tree-sitter/
+# Tree-sitter-mvl external repo — canonical home of the grammar
 GRAMMAR_SITE_SPECS = [
     ("package.json", "json", read_json_version, write_json_version),
     ("tree-sitter.json", "tree-sitter-json", read_tree_sitter_json_version, write_tree_sitter_json_version),

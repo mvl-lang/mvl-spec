@@ -2,7 +2,7 @@
   "name": "vscode-mvl",
   "displayName": "MVL",
   "description": "MVL (Minimum Verification Language) — syntax highlighting, syntax diagnostics via tree-sitter LSP",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "publisher": "LAB271",
   "license": "MIT",
   "repository": {

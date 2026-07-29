@@ -9,7 +9,7 @@ Scripts that regenerate downstream tooling artifacts from `grammar/keywords.yaml
 ```
 tools/generators/
 ├── gen_pygments.py         keywords.yaml → tools/pygments/mvl_pygments/keywords.py
-├── gen_tree_sitter.js      keywords.yaml → tools/tree-sitter/grammar.js (keyword sections)
+├── gen_tree_sitter.js      keywords.yaml → mvl-lang/tree-sitter-mvl grammar.js (keyword sections)
 ├── gen_vscode.js           keywords.yaml → editors/vscode/syntaxes/mvl.tmLanguage.json
 ├── regen-all.sh            Run all generators; used by CI drift check
 └── check-drift.sh          Verify no downstream artifact drifts from keywords.yaml
@@ -21,7 +21,7 @@ Grammar or keyword changes flow one direction:
 
 ```
 grammar/keywords.yaml  ─┬─►  tools/pygments/          (via gen_pygments.py)
-                       ├─►  tools/tree-sitter/       (via gen_tree_sitter.js)
+                       ├─►  tree-sitter-mvl repo    (via gen_tree_sitter.js)
                        └─►  editors/vscode/          (via gen_vscode.js)
 ```
 

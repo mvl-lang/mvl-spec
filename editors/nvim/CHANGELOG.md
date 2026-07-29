@@ -2,6 +2,20 @@
 
 ## [Unreleased]
 
+## [0.1.3] — 2026-07-22
+
+### Fixed
+
+- Highlights now cover qualified variant patterns and method-call
+  chains in match arms — see the tree-sitter-mvl `0.1.3` fixes.
+
+### Changed
+
+- `install.sh` resolves `tree-sitter-mvl` as a sibling of `mvl-spec`
+  (`$SCRIPT_DIR/../tree-sitter-mvl`); removed the URL-clone and
+  `MVL_TREE_SITTER_DIR` fallbacks in favour of the simpler sibling
+  layout the ecosystem now assumes.
+
 ## [0.1.0] — 2026-07-13
 
 Initial release. Migrated from `mvl-lang/mvl/etc/nvim-mvl/`.

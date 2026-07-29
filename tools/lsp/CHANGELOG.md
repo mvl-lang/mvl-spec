@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.1.3] — 2026-07-22
+
+Version aligned to mvl-spec `0.1.3`.  No functional LSP changes;
+diagnostics will pick up the tree-sitter-mvl `0.1.3` grammar
+transitively when the server is reinstalled.
+
 ## [0.1.0] — 2026-07-15
 
 Initial release. Migrated from `mvl-lang/mvl/tools/lsp_server.py`
