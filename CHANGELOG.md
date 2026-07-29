@@ -10,6 +10,36 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). While t
 
 ## [Unreleased]
 
+### Fixed
+
+- **IFC label set propagated to every editor artifact.** PR #31 (0.1.2)
+  corrected `grammar/grammar.ebnf` and `grammar/keywords.yaml` — dropping the
+  closed `security_label` set and the bogus `Public` entry — but touched no
+  grammar *implementation*. The wrong label set stayed live downstream for two
+  weeks, in five separate hand-maintained copies. Now fixed:
+  - `editors/nvim/queries/mvl/highlights.scm` and
+    `editors/zed/languages/mvl/highlights.scm` — dropped the
+    `declassify_expr` / `sanitize_expr` captures (#894 removed both
+    constructs); added a capture for the transition name in `relabel_expr`.
+  - `editors/vscode/syntaxes/mvl.tmLanguage.json` — TextMate, so both defects
+    were reimplemented as regexes. `security-labels` matched
+    `(Public|Tainted|Secret|Clean)`; it now matches the six `stdlib_labels`.
+    `special-forms` matched `(sanitize|declassify)`; it now matches
+    `relabel <name>`.
+  - `editors/zed/extension.toml` — grammar `rev` bumped `dd51a5f` →
+    `009a50a`, which is the first `tree-sitter-mvl` `main` commit carrying the
+    corrected label set. The previous pin predated the fix.
+  - READMEs for nvim, zed, vscode and pygments all documented `Public` and
+    `Clean` as real labels and `sanitize`/`declassify` as live special forms.
+
+  The grammar-side fix is mvl-lang/tree-sitter-mvl#1 / PR #2, which also found
+  that `relabel_expr` was defined but referenced nowhere — so current IFC
+  syntax did not parse at all while the two removed constructs did.
+
+  Root cause is #2: `tools/generators/` is README-only, so `keywords.yaml`
+  generates nothing and every downstream artifact is hand-copied. Until that
+  lands, this class of drift recurs.
+
 ## [0.1.3] — 2026-07-22
 
 ### Fixed

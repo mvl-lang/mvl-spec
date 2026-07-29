@@ -66,11 +66,11 @@
     },
 
     "special-forms": {
-      "comment": "sanitize() and declassify() are security-critical built-ins",
+      "comment": "Named IFC relabel transitions. #894 removed sanitize() and declassify(); a named relabel is now the only trust-boundary crossing.",
       "patterns": [
         {
           "name": "keyword.other.special-form.mvl",
-          "match": "\\b(sanitize|declassify)\\b"
+          "match": "\\brelabel\\s+[A-Za-z_][A-Za-z0-9_]*"
         }
       ]
     },
@@ -86,11 +86,11 @@
     },
 
     "security-labels": {
-      "comment": "Type-level security labels — Public[T], Tainted[T], Secret[T], Clean[T]",
+      "comment": "Stdlib IFC labels, mirroring grammar/keywords.yaml stdlib_labels. There is no Public label (unlabeled is public by default, grammar.ebnf:139-140) and no Clean label. User-declared labels via `label Foo;` are not matched: TextMate cannot resolve them.",
       "patterns": [
         {
           "name": "storage.type.security-label.mvl",
-          "match": "\\b(Public|Tainted|Secret|Clean)(?=\\s*\\[)"
+          "match": "\\b(Tainted|Secret|ConfigPath|DbUrl|ApiEndpoint|AuditTarget)(?=\\s*\\[)"
         }
       ]
     },
