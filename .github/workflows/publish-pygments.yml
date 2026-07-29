@@ -3,35 +3,66 @@ name: Publish pygments-mvl
 # Triggered by tags matching `pygments-v*` (e.g. pygments-v0.1.0).
 # Publishes tools/pygments/ to PyPI as `pygments-mvl`.
 #
-# SKELETON — the pygments lexer does not exist yet (tracked in #1).
-# When the lexer lands, wire PYPI_API_TOKEN and flip `if: false` → `true`.
+# Authentication is PyPI Trusted Publishing (OIDC) — there is no PYPI_API_TOKEN
+# and no repository secret. GitHub mints a short-lived OIDC token, PyPI verifies
+# it came from this repo and this workflow file, and exchanges it for a
+# single-use upload credential. The pending publisher is registered as:
+#
+#   project pygments-mvl | mvl-lang/mvl-spec | publish-pygments.yml | env (any)
+#
+# This matches the stance ADR-0039 and ADR-0047 already take for `mvl publish
+# --sign`: "GitHub OIDC (ephemeral keys) … no key management". A long-lived PyPI
+# token would have contradicted our own supply-chain decision.
+#
+# NOTE: the lexer itself does not exist yet (#1, targeted at 0.1.5). The
+# precondition step below fails loudly rather than letting a stray tag produce a
+# GitHub Release for a package that was never built.
 
 on:
   push:
     tags:
       - "pygments-v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write # create the GitHub Release
+      id-token: write # REQUIRED — mints the OIDC token PyPI verifies
     defaults:
       run:
         working-directory: tools/pygments
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Precondition — the package must actually exist
+        # tools/pygments/ is README-only until #1 lands. Without this, a tag
+        # would fail deep inside a tomllib traceback and still cut a Release.
+        run: |
+          set -euo pipefail
+          missing=0
+          for f in pyproject.toml CHANGELOG.md; do
+            [ -f "$f" ] || { echo "::error::tools/pygments/$f is missing"; missing=1; }
+          done
+          if [ "$missing" -ne 0 ]; then
+            echo "::error::pygments-mvl is not ready to publish — see mvl-lang/mvl-spec#1"
+            exit 1
+          fi
 
       - name: Extract version from tag
         id: version
         run: echo "version=${GITHUB_REF#refs/tags/pygments-v}" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
 
       - name: Install build tools
-        run: pip install --upgrade pip build twine
+        run: pip install --upgrade pip build
 
       - name: Verify manifest version matches tag
         run: |
@@ -41,18 +72,35 @@ jobs:
             exit 1
           fi
 
+      - name: Verify keyword tables are generated, not transcribed
+        # #1 must import from gen_pygments.py output rather than restating the
+        # lists a sixth time. Hand-written keyword tables here would reintroduce
+        # exactly the drift ADR-0060 (mvl-lang/mvl#2050) exists to prevent.
+        run: |
+          set -euo pipefail
+          if [ -f mvl_pygments/keywords.py ]; then
+            grep -q "DO NOT EDIT" mvl_pygments/keywords.py \
+              || { echo "::error::mvl_pygments/keywords.py lacks the generated banner — it must come from tools/generators/gen_pygments.py"; exit 1; }
+            echo "keywords.py is generated"
+          else
+            echo "::error::mvl_pygments/keywords.py absent — the lexer must consume generated keyword tables (#2 blocks #1)"
+            exit 1
+          fi
+
       - name: Build
         run: python -m build
 
       - name: Publish to PyPI
-        if: false   # ← flip to `true` once PYPI_API_TOKEN is configured
-        run: twine upload dist/*
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        # No username/password: omitting them is what selects trusted publishing.
+        uses: pypa/gh-action-pypi-publish@2834a314042ef964da07689278dd1e9d773e8afd # v1.14.1
+        with:
+          # This action is not a `run` step, so defaults.run.working-directory
+          # does not apply — the path must be given from the repo root.
+          packages-dir: tools/pygments/dist
+          print-hash: true
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@fe965f7af51af5f2602596916f38a38df2e33de0 # v3.0.2
         with:
           name: pygments-mvl ${{ steps.version.outputs.version }}
           body_path: tools/pygments/CHANGELOG.md

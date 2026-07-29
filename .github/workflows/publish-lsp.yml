@@ -1,37 +1,57 @@
 name: Publish mvl-lsp
 
-# Triggered by tags matching `lsp-v*` (e.g. lsp-v0.1.0).
+# Triggered by tags matching `lsp-v*` (e.g. lsp-v0.1.4).
 # Publishes tools/lsp/ to PyPI as `mvl-lsp`.
 #
-# SKELETON — PYPI_API_TOKEN not yet configured.  The publish step is
-# gated behind `if: false` until real credentials are wired up.
+# Authentication is PyPI Trusted Publishing (OIDC) — there is no PYPI_API_TOKEN
+# and no repository secret. GitHub mints a short-lived OIDC token, PyPI verifies
+# it came from this repo and this workflow file, and exchanges it for a
+# single-use upload credential.
+#
+# REQUIRES a pending publisher registered at
+# https://pypi.org/manage/account/publishing/ as:
+#
+#   project mvl-lsp | mvl-lang/mvl-spec | publish-lsp.yml | env (any)
+#
+# This matches the stance ADR-0039 and ADR-0047 already take for `mvl publish
+# --sign`: "GitHub OIDC (ephemeral keys) … no key management". A long-lived PyPI
+# token would have contradicted our own supply-chain decision.
+#
+# Unlike pygments-mvl (#1, not written yet), mvl-lsp exists and is publishable:
+# tools/lsp is at 0.1.4 with a package, tests and a changelog, and the name is
+# unclaimed on PyPI.
 
 on:
   push:
     tags:
       - "lsp-v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write # create the GitHub Release
+      id-token: write # REQUIRED — mints the OIDC token PyPI verifies
     defaults:
       run:
         working-directory: tools/lsp
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Extract version from tag
         id: version
         run: echo "version=${GITHUB_REF#refs/tags/lsp-v}" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
 
       - name: Install build tools
-        run: pip install --upgrade pip build twine
+        run: pip install --upgrade pip build
 
       - name: Verify manifest version matches tag
         run: |
@@ -41,18 +61,38 @@ jobs:
             exit 1
           fi
 
+      - name: Verify VERSION file agrees too
+        # tools/check-versions.py keeps VERSION, pyproject.toml and CHANGELOG in
+        # lockstep; a tag that disagrees with any of them is a mis-tag.
+        run: |
+          FILE_VERSION=$(cat VERSION)
+          if [ "$FILE_VERSION" != "${{ steps.version.outputs.version }}" ]; then
+            echo "::error::tools/lsp/VERSION ($FILE_VERSION) does not match tag (${{ steps.version.outputs.version }})"
+            exit 1
+          fi
+
+      - name: Run the test suite before publishing
+        # Publishing to PyPI is irreversible for a given version number. Cheap
+        # insurance: the smoke test must pass on the exact tree being shipped.
+        # pyproject.toml declares the extra as `test`, not `dev`.
+        run: |
+          pip install -e '.[test]'
+          python -m pytest tests/ -q
+
       - name: Build
         run: python -m build
 
       - name: Publish to PyPI
-        if: false   # ← flip to `true` once PYPI_API_TOKEN is configured
-        run: twine upload dist/*
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        # No username/password: omitting them is what selects trusted publishing.
+        uses: pypa/gh-action-pypi-publish@2834a314042ef964da07689278dd1e9d773e8afd # v1.14.1
+        with:
+          # This action is not a `run` step, so defaults.run.working-directory
+          # does not apply — the path must be given from the repo root.
+          packages-dir: tools/lsp/dist
+          print-hash: true
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@fe965f7af51af5f2602596916f38a38df2e33de0 # v3.0.2
         with:
           name: mvl-lsp ${{ steps.version.outputs.version }}
           body_path: tools/lsp/CHANGELOG.md
