@@ -13,8 +13,8 @@
 
 ; BEGIN GENERATED KEYWORDS
 ; DO NOT EDIT THIS BLOCK BY HAND. Generated from mvl-spec
-; grammar/keywords.yaml by tools/generators/gen_highlights.py. Run
-; tools/generators/regen-all.sh after editing keywords.yaml.
+; grammar/grammar.ebnf by tools/generators/gen_highlights.py. Run
+; tools/generators/regen-all.sh after editing the grammar.
 ;
 ; Literal keyword lists only. Node-anchored captures are hand-written
 ; below this region and survive regeneration.
@@ -91,6 +91,7 @@
 ;   old
 ;   end
 ;   timeout
+;   audit
 ; END GENERATED KEYWORDS
 
 
