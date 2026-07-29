@@ -10,6 +10,42 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). While t
 
 ## [Unreleased]
 
+## [0.1.5] — 2026-07-29
+
+### Added
+
+- **`pygments-mvl` — a Pygments lexer for MVL (#1).** Registers under the `mvl`
+  alias and claims `*.mvl`, so ```` ```mvl ```` fences and `pygmentize -l mvl` work
+  anywhere Pygments is installed: mkdocs-material, Sphinx, Hugo/Chroma, Jupyter.
+  Published to PyPI via Trusted Publishing.
+
+  Its keyword tables are **generated** by the new
+  `tools/generators/gen_pygments.py` — the lexer imports them rather than
+  restating the lists. pygments-mvl would otherwise have been the sixth artifact
+  to hand-transcribe them, and all five previous ones drifted (ADR-0060,
+  mvl-lang/mvl#2050). `publish-pygments.yml` refuses to publish a `keywords.py`
+  lacking the generated banner.
+
+  Contextual keywords are matched only where the grammar admits them, so
+  `let end = 5;` renders `end` as a name. That is covered by tests because it is
+  the exact regression that shipped in three `.scm` query sets, the VS Code
+  TextMate grammar and `docs/manual/18-keywords.md`.
+
+- `tools/pygments/{pyproject.toml,CHANGELOG.md}` added as `check-versions.py`
+  version sites. Without them the new package's version would not have been
+  checked at all.
+
+### Changed
+
+- `regen-all.sh` runs `gen_pygments.py`, so the drift gate now covers five
+  generated artifacts.
+- All artifacts bumped to 0.1.5 in lockstep (twelve version sites).
+
+### Note
+
+`mvl-lang.org` still labels MVL blocks ```` ```rust ````. Swapping those 109 fences
+is a separate change in `mvl-lang.github.io` and is what makes this visible.
+
 ## [0.1.4] — 2026-07-29
 
 ### Added

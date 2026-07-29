@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [0.1.5] — 2026-07-29
+
+### Changed
+
+- Version aligned to mvl-spec `0.1.5`. No functional changes in this component;
+  0.1.5 delivers the `pygments-mvl` lexer (#1).
+
 ## [0.1.4] — 2026-07-29
 
 ### Fixed
