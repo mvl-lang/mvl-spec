@@ -86,3 +86,63 @@ jobs:
           git --no-pager diff
           echo "::endgroup::"
           echo "::notice::Edit grammar/grammar.ebnf, then run tools/generators/regen-all.sh"
+
+  zed-pin:
+    name: Zed's pinned grammar can load Zed's queries
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out mvl-spec
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # editors/zed/extension.toml pins tree-sitter-mvl by commit SHA, and Zed
+      # fetches the grammar at exactly that revision. If the queries reference a
+      # node the pinned grammar does not have, tree-sitter rejects the WHOLE
+      # query file and the user loses all highlighting — not just the one rule.
+      #
+      # That shipped: the pin sat at 009a50a while the regenerated queries
+      # referenced "ghost", which only became a token once ghost_let_stmt was
+      # wired (mvl-lang/tree-sitter-mvl#3). Symptom was total silence, and the
+      # only signal was `Invalid node type "ghost"` from a manual
+      # `tree-sitter query` run.
+      - name: Read the pinned revision
+        id: pin
+        run: |
+          set -euo pipefail
+          rev=$(grep -oE '^rev = "[0-9a-f]{40}"' editors/zed/extension.toml | grep -oE '[0-9a-f]{40}')
+          test -n "$rev" || { echo "::error::no 40-char rev in editors/zed/extension.toml"; exit 1; }
+          echo "rev=$rev" >> "$GITHUB_OUTPUT"
+          echo "pinned grammar: $rev"
+
+      - name: Check out tree-sitter-mvl at that exact revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: mvl-lang/tree-sitter-mvl
+          ref: ${{ steps.pin.outputs.rev }}
+          path: grammar-at-pin
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "20"
+
+      - name: Install tree-sitter CLI
+        run: npm install -g tree-sitter-cli@0.25.10
+
+      - name: Load Zed's queries against the pinned grammar
+        run: |
+          set -euo pipefail
+          cd grammar-at-pin
+          tree-sitter generate
+          printf 'fn f() -> Unit { ghost let w: Int = 1; }\n' > /tmp/probe.mvl
+          for q in highlights indents; do
+            src="../editors/zed/languages/mvl/$q.scm"
+            [ -f "$src" ] || continue
+            echo "::group::$q.scm"
+            if ! tree-sitter query "$src" /tmp/probe.mvl > /tmp/out.txt 2>&1; then
+              cat /tmp/out.txt
+              echo "::error::editors/zed/languages/mvl/$q.scm does not load against the pinned grammar (${{ steps.pin.outputs.rev }}). Bump rev in editors/zed/extension.toml."
+              exit 1
+            fi
+            echo "$q.scm loads"
+            echo "::endgroup::"
+          done
+          echo "Zed's queries load against the pinned grammar"

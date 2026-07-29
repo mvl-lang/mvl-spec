@@ -11,7 +11,7 @@ repository = "https://github.com/mvl-lang/mvl-spec"
 # extension system requires.
 [grammars.mvl]
 repository = "https://github.com/mvl-lang/tree-sitter-mvl"
-rev = "009a50ae42f07cbc80219da11ce8ab6bbf2cbffd"
+rev = "2a7e8a58d522834841fc214b0f7a87301792c2ed"
 
 [language_servers.mvl-lsp]
 name = "MVL Language Server"
