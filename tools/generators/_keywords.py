@@ -61,6 +61,19 @@ PRODUCTION_NOISE = {
         "(x.len()); ref_atom enumerates the free-function form len(x) because "
         "the refinement sub-grammar admits no arbitrary calls"
     ),
+    # mvl-lang/mvl-spec#38: numeric-literal syntax markers, not identifiers or
+    # keywords. Case-insensitive by lexer design (numbers.rs matches Some('x')
+    # | Some('X') etc.), so both cases appear as literal terminals in INTEGER.
+    "x": "hex-literal prefix marker (0x...), case-insensitive",
+    "X": "hex-literal prefix marker (0X...), case-insensitive",
+    "b": "binary-literal prefix marker (0b...), case-insensitive",
+    "B": "binary-literal prefix marker (0B...), case-insensitive",
+    "o": "octal-literal prefix marker (0o...), case-insensitive",
+    "O": "octal-literal prefix marker (0O...), case-insensitive",
+    "e": "float exponent marker (1e10), case-insensitive",
+    "E": "float exponent marker (1E10), case-insensitive",
+    "f": "HEX_DIGIT character-class upper bound",
+    "F": "HEX_DIGIT character-class upper bound",
 }
 
 BANNER = (
