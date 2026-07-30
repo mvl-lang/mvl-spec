@@ -496,6 +496,24 @@ module or make it `pub`.
 Prefer `while true` + `return` for server/accept/receive loops instead of
 recursive tail-calls.
 
+### Constants: `SCREAMING_SNAKE_CASE`
+
+Top-level `const` — `pub const` or private `const`, at module scope — uses
+`SCREAMING_SNAKE_CASE`: `pub const MAX_RETRIES: Int = 5;`. There is no
+top-level `let`; module-scope bindings are declared with `const` only —
+bare or `pub let` at module scope is a parse error. `let` bindings inside
+function bodies stay `snake_case`, same as always. Matches Rust, Go, and
+Python convention, and avoids the `rustc` `non_upper_case_globals` warning
+MVL's Rust backend otherwise emits when transpiling a lowercase top-level
+const.
+
+**Enforced today** via `mvl lint`'s `[naming-const]` warning (verified
+against `mvl` 1.7.2 — a lowercase `pub const` compiles clean under `mvl
+check` but is flagged by `mvl lint`). Not yet a hard `mvl check` error.
+`std/` and `examples/` are already fully compliant — zero lowercase
+top-level `const` remain. Tracked as
+[mvl-spec#32](https://github.com/mvl-lang/mvl-spec/issues/32).
+
 ### Layout
 
 ```

@@ -45,6 +45,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). While t
   compiles — a known pre-existing gap, documented as such, not silently
   fixed here — while `0x_` (no real digit after the prefix) correctly
   errors.
+- `agents/AGENTS.md`: naming-convention rule for top-level `const`
+  (`SCREAMING_SNAKE_CASE`), tracked as #32 (#39 closed as its duplicate —
+  its "extend to top-level `let`" premise was wrong: there is no top-level
+  `let` in MVL, only `const`, confirmed against the real compiler). Also
+  corrects the record: the `mvl lint` rule and the stdlib/examples audit
+  both already exist and pass — verified, not assumed — leaving only this
+  doc as the missing piece of #32's acceptance criteria.
 
 ## [0.1.5] — 2026-07-29
 
