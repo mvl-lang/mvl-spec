@@ -13,6 +13,9 @@ Usage:
     python3 tools/check-versions.py --tree-sitter-dir PATH
                                                        # explicit grammar repo path
     python3 tools/check-versions.py --skip-tree-sitter # skip external repo entirely
+    python3 tools/check-versions.py --mvl-rust-dir PATH
+                                                       # explicit mvl-rust workspace path
+    python3 tools/check-versions.py --skip-mvl-rust    # skip mvl-rust entirely
 
 Tree-sitter-mvl resolution order:
     1. --tree-sitter-dir CLI flag
@@ -20,6 +23,17 @@ Tree-sitter-mvl resolution order:
     3. ../tree-sitter-mvl (sibling of mvl-spec)
     4. https://raw.githubusercontent.com/mvl-lang/tree-sitter-mvl/main/
        (read-only; --fix cannot touch remote)
+
+mvl-rust resolution order (same shape, its own env var/sibling/remote):
+    1. --mvl-rust-dir CLI flag
+    2. $MVL_RUST_DIR
+    3. ../mvl-rust (sibling of mvl-spec)
+    4. https://raw.githubusercontent.com/mvl-lang/mvl-rust/main/
+       (read-only; --fix cannot touch remote)
+
+mvl-rust is a Cargo workspace: every member crate inherits its version from
+the root Cargo.toml's [workspace.package], so there is exactly one site to
+check (unlike tree-sitter-mvl's five-file GRAMMAR_SITE_SPECS).
 
 CHANGELOG entries are checked read-only: the top `## [X.Y.Z]` header must
 be either the target version or `## [Unreleased]`. --fix does not touch
@@ -46,15 +60,16 @@ from dataclasses import dataclass
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-REMOTE_BASE = "https://raw.githubusercontent.com/mvl-lang/tree-sitter-mvl/main/"
+TREE_SITTER_REMOTE_BASE = "https://raw.githubusercontent.com/mvl-lang/tree-sitter-mvl/main/"
+MVL_RUST_REMOTE_BASE = "https://raw.githubusercontent.com/mvl-lang/mvl-rust/main/"
 
 
 @dataclass
 class VersionSite:
     """A single place a version string lives."""
     path: str          # display path, relative to whichever repo
-    kind: str          # "plain" | "toml-package" | "toml-extension" | "json" | "tree-sitter-json" | "changelog"
-    location: str      # "local" (mvl-spec) | "grammar-local" | "grammar-remote"
+    kind: str          # "plain" | "toml-package" | "toml-workspace" | "toml-extension" | "json" | "tree-sitter-json" | "changelog"
+    location: str      # "local" (mvl-spec) | "grammar-local" | "grammar-remote" | "mvl-rust-local" | "mvl-rust-remote"
     reader: object     # callable(text) -> str | None (returns current version)
     writer: object     # callable(text, new) -> str (returns new file text), or None if read-only
 
@@ -79,6 +94,24 @@ def read_toml_version(text: str, table: str = "package") -> str | None:
     for tbl in ("package", "project"):
         if tbl in data and isinstance(data[tbl], dict) and "version" in data[tbl]:
             return data[tbl]["version"]
+    return None
+
+
+def read_cargo_workspace_version(text: str) -> str | None:
+    # mvl-rust's root Cargo.toml declares the version once, in
+    # [workspace.package]; every member crate inherits it via
+    # `version.workspace = true`. read_toml_version only checks
+    # [package]/[project], so a workspace-inherited version would silently
+    # read as "missing" (mvl-lang/mvl-spec#40).
+    try:
+        data = tomllib.loads(text)
+    except tomllib.TOMLDecodeError:
+        return None
+    ws = data.get("workspace") if isinstance(data, dict) else None
+    if isinstance(ws, dict):
+        pkg = ws.get("package")
+        if isinstance(pkg, dict) and isinstance(pkg.get("version"), str):
+            return pkg["version"]
     return None
 
 
@@ -190,6 +223,13 @@ GRAMMAR_SITE_SPECS = [
     ("CHANGELOG.md", "changelog", read_changelog_top, None),
 ]
 
+# mvl-rust external repo — Cargo workspace, version lives once in
+# [workspace.package]. No CHANGELOG.md exists there yet (mvl-lang/mvl-spec#40);
+# add a changelog site here if/when one is.
+MVL_RUST_SITE_SPECS = [
+    ("Cargo.toml", "toml-workspace", read_cargo_workspace_version, write_toml_version),
+]
+
 
 # ----- I/O helpers -----
 
@@ -241,6 +281,37 @@ def resolve_grammar_source(cli_dir: str | None, skip: bool) -> tuple[str, Path |
     return ("remote", None)
 
 
+def resolve_mvl_rust_source(cli_dir: str | None, skip: bool) -> tuple[str, Path | None]:
+    """
+    Same shape as resolve_grammar_source, for the mvl-rust workspace.
+
+    Returns (mode, path):
+      mode = "local" | "remote" | "skip"
+      path = Path when local, None when remote or skip
+    """
+    if skip:
+        return ("skip", None)
+    if cli_dir:
+        p = Path(cli_dir).expanduser().resolve()
+        if not (p / "Cargo.toml").exists():
+            print(f"--mvl-rust-dir '{p}' does not look like an mvl-rust checkout (missing Cargo.toml)",
+                  file=sys.stderr)
+            sys.exit(2)
+        return ("local", p)
+    env_dir = os.environ.get("MVL_RUST_DIR")
+    if env_dir:
+        p = Path(env_dir).expanduser().resolve()
+        if (p / "Cargo.toml").exists():
+            return ("local", p)
+        print(f"$MVL_RUST_DIR='{env_dir}' does not exist or is not a checkout — falling back",
+              file=sys.stderr)
+    sibling = (REPO_ROOT.parent / "mvl-rust").resolve()
+    if (sibling / "Cargo.toml").exists():
+        return ("local", sibling)
+    # remote fallback
+    return ("remote", None)
+
+
 # ----- Result table -----
 
 @dataclass
@@ -276,7 +347,32 @@ def evaluate_grammar(mode: str, path: Path | None, target: str) -> list[Result]:
         if mode == "local":
             text = fetch_local(path / filename)
         else:
-            text = fetch_remote(REMOTE_BASE + filename)
+            text = fetch_remote(TREE_SITTER_REMOTE_BASE + filename)
+        if text is None:
+            results.append(Result(site, None, target, False))
+            continue
+        current = reader(text)
+        if kind == "changelog":
+            ok = current in (target, "Unreleased")
+        else:
+            ok = current == target
+        r = Result(site, current, target, ok)
+        results.append(r)
+    return results
+
+
+def evaluate_mvl_rust(mode: str, path: Path | None, target: str) -> list[Result]:
+    """Build sites on the fly for the mvl-rust workspace. Mirrors evaluate_grammar."""
+    results = []
+    for filename, kind, reader, writer in MVL_RUST_SITE_SPECS:
+        loc = "mvl-rust-local" if mode == "local" else "mvl-rust-remote"
+        w = writer if mode == "local" else None
+        display = f"[mvl-rust] {filename}"
+        site = VersionSite(display, kind, loc, reader, w)
+        if mode == "local":
+            text = fetch_local(path / filename)
+        else:
+            text = fetch_remote(MVL_RUST_REMOTE_BASE + filename)
         if text is None:
             results.append(Result(site, None, target, False))
             continue
@@ -322,6 +418,23 @@ def apply_fix_grammar(result: Result, grammar_path: Path) -> bool:
     return True
 
 
+def apply_fix_mvl_rust(result: Result, mvl_rust_path: Path) -> bool:
+    """Mirrors apply_fix_grammar, for the mvl-rust workspace."""
+    if result.site.writer is None or result.ok or result.site.location != "mvl-rust-local":
+        return False
+    # site.path is display like "[mvl-rust] Cargo.toml" — strip prefix
+    filename = result.site.path.split("] ", 1)[-1]
+    path = mvl_rust_path / filename
+    text = fetch_local(path)
+    if text is None:
+        return False
+    new_text = result.site.writer(text, result.expected)
+    if new_text == text:
+        return False
+    path.write_text(new_text, encoding="utf-8")
+    return True
+
+
 # ----- Presentation -----
 
 def print_table(results: list[Result]) -> None:
@@ -352,6 +465,8 @@ def main() -> int:
     p.add_argument("--target", help="override target version (default: read mvl-spec/VERSION)")
     p.add_argument("--tree-sitter-dir", help="path to tree-sitter-mvl checkout")
     p.add_argument("--skip-tree-sitter", action="store_true", help="skip grammar-repo checks")
+    p.add_argument("--mvl-rust-dir", help="path to mvl-rust workspace checkout")
+    p.add_argument("--skip-mvl-rust", action="store_true", help="skip mvl-rust checks")
     args = p.parse_args()
 
     target = args.target or repo_version()
@@ -361,15 +476,25 @@ def main() -> int:
     if grammar_mode == "local":
         print(f"tree-sitter-mvl: local checkout at {grammar_path}")
     elif grammar_mode == "remote":
-        print(f"tree-sitter-mvl: fetching from {REMOTE_BASE}")
+        print(f"tree-sitter-mvl: fetching from {TREE_SITTER_REMOTE_BASE}")
     else:
         print("tree-sitter-mvl: SKIPPED")
+
+    mvl_rust_mode, mvl_rust_path = resolve_mvl_rust_source(args.mvl_rust_dir, args.skip_mvl_rust)
+    if mvl_rust_mode == "local":
+        print(f"mvl-rust: local checkout at {mvl_rust_path}")
+    elif mvl_rust_mode == "remote":
+        print(f"mvl-rust: fetching from {MVL_RUST_REMOTE_BASE}")
+    else:
+        print("mvl-rust: SKIPPED")
     print()
 
     # Evaluate all sites
     results = [evaluate_local(s, target) for s in LOCAL_SITES]
     if grammar_mode != "skip":
         results.extend(evaluate_grammar(grammar_mode, grammar_path, target))
+    if mvl_rust_mode != "skip":
+        results.extend(evaluate_mvl_rust(mvl_rust_mode, mvl_rust_path, target))
 
     # Apply fixes if requested
     if args.fix:
@@ -384,6 +509,11 @@ def main() -> int:
                     r.changed = True
                     r.ok = True
                     r.current = r.expected
+            elif r.site.location == "mvl-rust-local":
+                if apply_fix_mvl_rust(r, mvl_rust_path):
+                    r.changed = True
+                    r.ok = True
+                    r.current = r.expected
 
     print_table(results)
 
@@ -395,6 +525,8 @@ def main() -> int:
             print("Run with --fix to align local files.")
         if any(r.site.location == "grammar-remote" and not r.ok for r in results):
             print("Grammar repo is remote-only; --fix cannot touch it. Clone locally or use --tree-sitter-dir.")
+        if any(r.site.location == "mvl-rust-remote" and not r.ok for r in results):
+            print("mvl-rust is remote-only; --fix cannot touch it. Clone locally or use --mvl-rust-dir.")
         return 1
 
     print("\nall versions aligned.")

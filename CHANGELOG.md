@@ -15,6 +15,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). While t
 - `agents/AGENTS.md` — the canonical coding-agent guide to writing MVL, moved
   from `mvl-lang/mvl/etc/AGENTS.md`. Content unchanged apart from the header
   comment recording the new location.
+- `tools/check-versions.py --mvl-rust-dir` (#40) — verifies `mvl-rust`'s
+  workspace version against `mvl-spec/VERSION`, mirroring the existing
+  `--tree-sitter-dir` support: CLI flag → `$MVL_RUST_DIR` → `../mvl-rust`
+  sibling → remote fallback (read-only). New `read_cargo_workspace_version`
+  reader, since `mvl-rust`'s version lives in `[workspace.package]`, a shape
+  the generic TOML reader doesn't check. `--skip-mvl-rust` to opt out.
+  Confirmed working against the real `mvl-rust` checkout — surfaces genuine
+  pre-existing drift (workspace at 0.1.3, spec at 0.1.5), not a false
+  positive.
 
 ## [0.1.5] — 2026-07-29
 
