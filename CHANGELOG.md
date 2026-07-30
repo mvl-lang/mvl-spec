@@ -24,6 +24,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). While t
   Confirmed working against the real `mvl-rust` checkout — surfaces genuine
   pre-existing drift (workspace at 0.1.3, spec at 0.1.5), not a false
   positive.
+- **Numeric literal grammar, complete rather than patched (#38).** The
+  reported gap was narrower than the actual one: `INTEGER`/`FLOAT` had no
+  `_` digit-group separators, but also — found while grounding the fix in
+  `src/mvl/parser/lexer/numbers.rs` — the EBNF had **zero** representation
+  of hex/binary/octal literals (`0x`/`0b`/`0o`) or scientific exponents
+  (`1.5e10`) at all, despite the lexer fully implementing both. Added
+  `HEX_DIGIT`/`BIN_DIGIT`/`OCT_DIGIT`/`EXPONENT` productions and `_`
+  separators throughout, matching the lexer exactly — including that a
+  float needs either a fractional part or an exponent, not necessarily
+  both (`1e10` is a valid float with no `.`). New single-character
+  terminals (`x`/`X`, `b`/`B`, `o`/`O`, `e`/`E`, `f`/`F`) classified in
+  `tools/generators/_keywords.py`'s `PRODUCTION_NOISE` — syntax markers,
+  not identifiers or keywords.
+
+  Every literal form verified against the real `mvl` 1.7.2 binary, not just
+  read from source: decimal/hex/binary/octal/float/scientific-with-and-
+  without-a-dot all compile clean with `_` separators. Also verified the
+  two edge cases the lexer's own comments flag: a trailing `_` (`1_`)
+  compiles — a known pre-existing gap, documented as such, not silently
+  fixed here — while `0x_` (no real digit after the prefix) correctly
+  errors.
 
 ## [0.1.5] — 2026-07-29
 
