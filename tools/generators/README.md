@@ -94,9 +94,9 @@ makes `--check` meaningful.
 
 ## Not here yet
 
-`gen_pygments.py` lands with the lexer itself (#1, targeted at 0.1.5). There is no
-`tools/pygments/mvl_pygments/` package to generate into yet, and #1 should import
-the generated tables rather than transcribe the lists a sixth time.
-
 Full-EBNF-driven codegen — parsing productions to generate whole grammar files
 rather than keyword tables — remains a separate, later step.
+
+(`gen_pygments.py` and the `tools/pygments/mvl_pygments/` package it targets
+both shipped in 0.1.5, closing #1 — this section previously described them as
+future work, stale as of that release.)
