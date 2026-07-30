@@ -10,6 +10,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). While t
 
 ## [Unreleased]
 
+### Added
+
+- `agents/AGENTS.md` — the canonical coding-agent guide to writing MVL, moved
+  from `mvl-lang/mvl/etc/AGENTS.md`. Content unchanged apart from the header
+  comment recording the new location.
+
 ## [0.1.5] — 2026-07-29
 
 ### Added

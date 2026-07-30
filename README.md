@@ -18,6 +18,7 @@ mvl-spec/
 │   └── keywords.yaml    Reserved keyword sets — single source of truth
 ├── semantics/        # Formal semantics (Ott → Coq/Isabelle/LaTeX) — planned
 ├── reference/        # Prose language reference — planned
+├── agents/           # AGENTS.md — canonical coding-agent guide, copied into MVL projects
 ├── tools/            # Language tooling that ships to package registries
 │   ├── tree-sitter/     tree-sitter-mvl (published to npm)
 │   ├── pygments/        pygments-mvl (published to PyPI) — planned
@@ -41,6 +42,12 @@ mvl-spec/
 - The prose language reference (planned)
 - Every parser and syntax-highlighter derived from the grammar
 - Editor integrations (Neovim, VS Code, Zed)
+- `agents/AGENTS.md` — the coding-agent guide to writing MVL, moved here from
+  `mvl-lang/mvl/etc/`. Only partly a clean fit by the rule below: its syntax
+  reference and 11-requirements table are spec content; its CLI commands,
+  stdlib map, and project conventions describe the compiler, not the
+  language. Kept together as one practical guide rather than split, but
+  worth knowing the seam is there if it ever needs to move again.
 
 **In [`mvl-lang/mvl`](https://github.com/mvl-lang/mvl):**
 
